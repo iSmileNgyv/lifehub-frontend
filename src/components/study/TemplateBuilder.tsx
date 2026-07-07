@@ -2,9 +2,10 @@
 
 import { useRef, useState } from 'react';
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDraggable, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
-import { X, Plus, Trash2, GripVertical, Pencil, ArrowLeftRight, Type, AlignLeft, Bold, Sparkles, Image as ImageIcon, Copy } from 'lucide-react';
+import { X, Plus, Trash2, GripVertical, Pencil, ArrowLeftRight, Type, AlignLeft, Bold, Sparkles, Image as ImageIcon, Copy, Upload, FileText } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { templateService } from '@/services/studyService';
+import { parseImport } from '@/lib/templateIO';
 import { ApiError } from '@/lib/api';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
@@ -43,6 +44,10 @@ export default function TemplateBuilder({ template, onClose, onSaved }: { templa
   const [editing, setEditing] = useState<TemplateField | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [importOpen, setImportOpen] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importErr, setImportErr] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const gridRefs = { front: useRef<HTMLDivElement>(null), back: useRef<HTMLDivElement>(null) };
   const metric = useRef({ cellW: 60, rowH: ROW_H + GAP });
@@ -109,6 +114,24 @@ export default function TemplateBuilder({ template, onClose, onSaved }: { templa
     setEditing(copy);
   };
 
+  // JSON idxal et — cari şablonu doldur (Yadda saxla ilə update olunur)
+  const applyImport = () => {
+    const parsed = parseImport(importText);
+    if (!parsed) { setImportErr(t('study.importInvalid')); return; }
+    setName(parsed.name);
+    setDescription(parsed.description ?? '');
+    setAiInstruction(parsed.ai_instruction ?? '');
+    setFields(normalize(parsed.fields));
+    setImportOpen(false);
+    setImportText('');
+    setImportErr('');
+  };
+  const pickFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => { setImportText(String(reader.result ?? '')); setImportErr(''); };
+    reader.readAsText(file);
+  };
+
   const submit = async () => {
     if (!name.trim()) { setError(t('study.tplName')); return; }
     const mapped = fields.map((f) => ({ ...f, key: f.key.startsWith('field_') ? slug(f.label) : f.key, label: f.label.trim() }));
@@ -133,6 +156,7 @@ export default function TemplateBuilder({ template, onClose, onSaved }: { templa
         <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t('study.tplDesc')} className="flex-1 max-w-xs h-9 px-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-violet-500" />
         <div className="ml-auto flex items-center gap-2">
           {error && <span className="text-xs text-red-500">{error}</span>}
+          <Button variant="outline" onClick={() => { setImportText(''); setImportErr(''); setImportOpen(true); }}><Upload className="w-4 h-4 mr-1" /> {t('study.importTemplate')}</Button>
           <Button onClick={submit} loading={saving}>{t('common.save')}</Button>
         </div>
       </div>
@@ -156,6 +180,29 @@ export default function TemplateBuilder({ template, onClose, onSaved }: { templa
       </DndContext>
 
       {editing && <FieldEditModal field={editing} onClose={() => setEditing(null)} onSave={(next) => saveEdit(editing.key, next)} onDuplicate={duplicateField} />}
+
+      {importOpen && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/50 p-4" onClick={() => setImportOpen(false)}>
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-gray-900 p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-1 flex items-center justify-between">
+              <h3 className="font-semibold text-gray-900 dark:text-white">{t('study.importTitle')}</h3>
+              <button onClick={() => setImportOpen(false)} className="text-gray-400 hover:text-gray-700"><X className="w-5 h-5" /></button>
+            </div>
+            <p className="mb-3 text-xs text-gray-400">{t('study.importReplaceHint')}</p>
+            <textarea value={importText} onChange={(e) => { setImportText(e.target.value); setImportErr(''); }} placeholder={t('study.importHint')} rows={10}
+              className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3 font-mono text-xs text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500" />
+            <input ref={fileRef} type="file" accept="application/json,.json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) pickFile(f); e.target.value = ''; }} />
+            {importErr && <p className="mt-2 text-sm text-red-600">{importErr}</p>}
+            <div className="mt-4 flex justify-between gap-2">
+              <Button variant="outline" onClick={() => fileRef.current?.click()}><FileText className="w-4 h-4 mr-1" /> {t('study.chooseFile')}</Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setImportOpen(false)}>{t('common.cancel')}</Button>
+                <Button onClick={applyImport} disabled={!importText.trim()}>{t('study.importBtn')}</Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

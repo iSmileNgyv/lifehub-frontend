@@ -699,6 +699,7 @@
     "copied": "Kopyalandı",
     "importTitle": "Şablonu idxal et (JSON)",
     "importHint": "Şablon JSON-unu bura yapışdır və ya fayl seç",
+    "importReplaceHint": "İdxal cari şablonun sahələrini və AI təlimatını əvəz edir. Yadda saxlayanda bu şablon yenilənir (deck bağı qalır).",
     "importBtn": "İdxal et",
     "chooseFile": "Fayl seç",
     "duplicate": "Kopyala",

@@ -699,6 +699,7 @@
     "copied": "Copied",
     "importTitle": "Import template (JSON)",
     "importHint": "Paste template JSON here or choose a file",
+    "importReplaceHint": "Import replaces the current template's fields and AI instruction. Saving updates this template (deck link is kept).",
     "importBtn": "Import",
     "chooseFile": "Choose file",
     "duplicate": "Duplicate",

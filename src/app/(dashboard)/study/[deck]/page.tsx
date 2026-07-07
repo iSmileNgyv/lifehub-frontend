@@ -67,7 +67,7 @@ export default function DeckCardsPage() {
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('study.searchCards')} className="w-full h-9 pl-9 pr-4 rounded-lg bg-gray-100 dark:bg-gray-800 text-sm outline-none focus:ring-1 focus:ring-blue-500" />
       </div>
 
-      {(() => { const q = query.trim().toLowerCase(); const shown = q ? cards.filter((c) => (c.front ?? '').toLowerCase().includes(q) || (c.back ?? '').toLowerCase().includes(q)) : cards; return (
+      {(() => { const q = query.trim().toLowerCase(); const strip = (s: string) => (s || '').replace(/<[^>]*>/g, ' '); const hay = (c: Card) => strip([c.front ?? '', c.back ?? '', ...Object.values(c.fields ?? {})].join(' ')).toLowerCase(); const shown = q ? cards.filter((c) => hay(c).includes(q)) : cards; return (
       loading ? <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>
         : shown.length === 0 ? <div className="py-16 text-center text-sm text-gray-400">{t('study.noCards')}</div>
           : (
@@ -76,7 +76,12 @@ export default function DeckCardsPage() {
                 <div key={c.uid} className="group flex items-start gap-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-3">
                   {c.front_image && <EntityImage uid={c.front_image} initial="?" className="w-12 h-12 rounded-lg shrink-0" />}
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-1">{c.fields ? (Object.values(c.fields).find((v) => v) || '—') : c.front}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-1">{c.fields ? (() => {
+                      const strip = (s: string) => (s || '').replace(/<[^>]*>/g, '');
+                      const lf = (template?.fields.filter((f) => f.list) ?? []).filter((f) => c.fields![f.key]);
+                      const parts = lf.length ? lf.map((f) => c.fields![f.key]) : [Object.values(c.fields).find((v) => v) ?? '—'];
+                      return strip(parts.join('  ·  '));
+                    })() : c.front}</p>
                     <p className="text-xs text-gray-400 line-clamp-1">{c.fields ? `${Object.values(c.fields).filter((v) => v).length} ${t('study.fieldCount')}` : c.back}</p>
                   </div>
                   <span className="text-[10px] text-gray-400 uppercase shrink-0">{c.state}</span>

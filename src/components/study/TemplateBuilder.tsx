@@ -220,10 +220,11 @@ function FieldEditModal({ field, onClose, onSave }: { field: TemplateField; onCl
   const [key, setKey] = useState(field.key.startsWith('field_') ? '' : field.key);
   const [description, setDescription] = useState(field.description ?? '');
   const [type, setType] = useState<FieldType>(field.type);
+  const [list, setList] = useState(!!field.list);
   const sel = 'w-full h-9 px-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-violet-500';
   return (
     <Modal open onClose={onClose} title={t('study.fieldLabel')} size="sm"
-      footer={<><Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button><Button onClick={() => onSave({ ...field, key: (key.trim() || slug(label) || field.key), label: label.trim(), description: description.trim() || null, type })}>{t('common.save')}</Button></>}>
+      footer={<><Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button><Button onClick={() => onSave({ ...field, key: (key.trim() || slug(label) || field.key), label: label.trim(), description: description.trim() || null, type, list })}>{t('common.save')}</Button></>}>
       <div className="space-y-3">
         <Input label={t('study.fieldLabel')} value={label} onChange={(e) => setLabel(e.target.value)} />
         <Input label={t('study.fieldKey')} value={key} onChange={(e) => setKey(e.target.value)} placeholder={slug(label)} />
@@ -240,6 +241,10 @@ function FieldEditModal({ field, onClose, onSave }: { field: TemplateField; onCl
             <option value="image">{t('study.typeImage')}</option>
           </select>
         </div>
+        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer pt-1">
+          <input type="checkbox" checked={list} onChange={(e) => setList(e.target.checked)} className="w-4 h-4 rounded" />
+          {t('study.showInList')}
+        </label>
       </div>
     </Modal>
   );

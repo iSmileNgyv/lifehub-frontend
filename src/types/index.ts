@@ -105,6 +105,7 @@ export interface TemplateField {
   type: FieldType;
   side: FieldSide;
   section: string | null;
+  list?: boolean; // kart siyahısında göstərilsin
   // Kətan layout (grid vahidləri) — opsional (köhnə şablonlar üçün)
   x?: number;
   y?: number;

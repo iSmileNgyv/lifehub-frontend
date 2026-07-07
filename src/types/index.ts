@@ -115,6 +115,7 @@ export interface CardTemplate {
   uid: string;
   name: string;
   description: string | null;
+  ai_instruction: string | null;
   fields: TemplateField[];
 }
 

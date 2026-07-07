@@ -32,6 +32,7 @@ export const cardService = {
 interface TemplatePayload {
   name: string;
   description?: string | null;
+  ai_instruction?: string | null;
   fields: TemplateField[];
 }
 

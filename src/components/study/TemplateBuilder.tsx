@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDraggable, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
-import { X, Plus, Trash2, GripVertical, Pencil, ArrowLeftRight, Type, AlignLeft, Bold, Image as ImageIcon } from 'lucide-react';
+import { X, Plus, Trash2, GripVertical, Pencil, ArrowLeftRight, Type, AlignLeft, Bold, Sparkles, Image as ImageIcon } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { templateService } from '@/services/studyService';
 import { ApiError } from '@/lib/api';
@@ -37,6 +37,7 @@ export default function TemplateBuilder({ template, onClose, onSaved }: { templa
   const { t } = useLanguage();
   const [name, setName] = useState(template?.name ?? '');
   const [description, setDescription] = useState(template?.description ?? '');
+  const [aiInstruction, setAiInstruction] = useState(template?.ai_instruction ?? '');
   const [fields, setFields] = useState<TemplateField[]>(() => normalize(template?.fields ?? []));
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [editing, setEditing] = useState<TemplateField | null>(null);
@@ -106,7 +107,7 @@ export default function TemplateBuilder({ template, onClose, onSaved }: { templa
     if (flat.some((f) => !f.key || !f.label)) { setError(t('study.fieldNeedLabel')); return; }
     setSaving(true); setError('');
     try {
-      const data = { name: name.trim(), description: description || null, fields: flat };
+      const data = { name: name.trim(), description: description || null, ai_instruction: aiInstruction || null, fields: flat };
       if (template) await templateService.update(template.uid, data); else await templateService.create(data);
       onSaved();
     } catch (e) { setError(e instanceof ApiError ? e.message : t('common.error')); }
@@ -123,6 +124,13 @@ export default function TemplateBuilder({ template, onClose, onSaved }: { templa
           {error && <span className="text-xs text-red-500">{error}</span>}
           <Button onClick={submit} loading={saving}>{t('common.save')}</Button>
         </div>
+      </div>
+
+      <div className="shrink-0 flex items-start gap-2 px-5 py-2 border-b border-gray-100 dark:border-gray-800 bg-violet-50/40 dark:bg-violet-950/10">
+        <span className="text-xs font-medium text-violet-700 dark:text-violet-300 flex items-center gap-1 mt-1.5 shrink-0"><Sparkles className="w-3.5 h-3.5" /> {t('study.aiInstruction')}</span>
+        <textarea value={aiInstruction} onChange={(e) => setAiInstruction(e.target.value)} rows={1}
+          placeholder={t('study.aiInstructionPh')}
+          className="flex-1 min-h-[34px] px-3 py-1.5 rounded-lg border border-violet-200 dark:border-violet-800 bg-white dark:bg-gray-900 text-sm outline-none focus:border-violet-500 resize-y" />
       </div>
 
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>

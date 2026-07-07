@@ -726,6 +726,8 @@
     "sectionName": "Bölmə adı",
     "dropHere": "Sahələri bura sürüklə",
     "fieldType": "Tip",
-    "typeRich": "Formatlı mətn"
+    "typeRich": "Formatlı mətn",
+    "aiInstruction": "AI təlimatı",
+    "aiInstructionPh": "Bütün sahələrə aid ümumi göstəriş — məs. «vurğu düşən hərfi qalın və qırmızı et»"
   }
 }

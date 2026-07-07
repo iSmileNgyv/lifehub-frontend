@@ -726,6 +726,8 @@
     "sectionName": "Section name",
     "dropHere": "Drag fields here",
     "fieldType": "Type",
-    "typeRich": "Rich text"
+    "typeRich": "Rich text",
+    "aiInstruction": "AI instruction",
+    "aiInstructionPh": "General guidance for all fields — e.g. «make the stressed letter bold and red»"
   }
 }

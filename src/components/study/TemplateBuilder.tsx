@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDraggable, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
-import { X, Plus, Trash2, GripVertical, Pencil, ArrowLeftRight, Type, AlignLeft, Bold, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { X, Plus, Trash2, GripVertical, Pencil, ArrowLeftRight, Type, AlignLeft, Bold, Sparkles, Image as ImageIcon, Copy } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { templateService } from '@/services/studyService';
 import { ApiError } from '@/lib/api';
@@ -101,10 +101,21 @@ export default function TemplateBuilder({ template, onClose, onSaved }: { templa
   };
   const saveEdit = (oldKey: string, next: TemplateField) => { setFields((fs) => fs.map((f) => (f.key === oldKey ? next : f))); setEditing(null); };
 
+  // Sahəni kopyala: eyni tərəfdə, aşağıda, təzə key ilə yeni sahə kimi əlavə et və redaktəyə aç
+  const duplicateField = (base: TemplateField) => {
+    const maxY = fields.filter((f) => f.side === base.side).reduce((m, f) => Math.max(m, (f.y ?? 0) + (f.h ?? 1)), 0);
+    const copy: TemplateField = { ...base, key: `field_${Date.now()}_${idc++}`, x: 0, y: maxY };
+    setFields((fs) => [...fs, copy]);
+    setEditing(copy);
+  };
+
   const submit = async () => {
     if (!name.trim()) { setError(t('study.tplName')); return; }
-    const flat = fields.map((f) => ({ ...f, key: f.key.startsWith('field_') ? slug(f.label) : f.key, label: f.label.trim() }));
-    if (flat.some((f) => !f.key || !f.label)) { setError(t('study.fieldNeedLabel')); return; }
+    const mapped = fields.map((f) => ({ ...f, key: f.key.startsWith('field_') ? slug(f.label) : f.key, label: f.label.trim() }));
+    if (mapped.some((f) => !f.key || !f.label)) { setError(t('study.fieldNeedLabel')); return; }
+    // Təkrar key-ləri unikallaşdır (kopyalanmış sahələr üçün)
+    const used = new Set<string>();
+    const flat = mapped.map((f) => { let k = f.key; let i = 2; while (used.has(k)) k = `${f.key}_${i++}`; used.add(k); return { ...f, key: k }; });
     setSaving(true); setError('');
     try {
       const data = { name: name.trim(), description: description || null, ai_instruction: aiInstruction || null, fields: flat };
@@ -144,7 +155,7 @@ export default function TemplateBuilder({ template, onClose, onSaved }: { templa
         <DragOverlay>{activeField ? <BlockInner field={activeField} overlay /> : null}</DragOverlay>
       </DndContext>
 
-      {editing && <FieldEditModal field={editing} onClose={() => setEditing(null)} onSave={(next) => saveEdit(editing.key, next)} />}
+      {editing && <FieldEditModal field={editing} onClose={() => setEditing(null)} onSave={(next) => saveEdit(editing.key, next)} onDuplicate={duplicateField} />}
     </div>
   );
 }
@@ -214,7 +225,7 @@ function BlockInner({ field, overlay }: { field: TemplateField; overlay?: boolea
   );
 }
 
-function FieldEditModal({ field, onClose, onSave }: { field: TemplateField; onClose: () => void; onSave: (f: TemplateField) => void }) {
+function FieldEditModal({ field, onClose, onSave, onDuplicate }: { field: TemplateField; onClose: () => void; onSave: (f: TemplateField) => void; onDuplicate: (f: TemplateField) => void }) {
   const { t } = useLanguage();
   const [label, setLabel] = useState(field.label);
   const [key, setKey] = useState(field.key.startsWith('field_') ? '' : field.key);
@@ -222,9 +233,13 @@ function FieldEditModal({ field, onClose, onSave }: { field: TemplateField; onCl
   const [type, setType] = useState<FieldType>(field.type);
   const [list, setList] = useState(!!field.list);
   const sel = 'w-full h-9 px-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-violet-500';
+  const build = (): TemplateField => ({ ...field, key: (key.trim() || slug(label) || field.key), label: label.trim(), description: description.trim() || null, type, list });
   return (
     <Modal open onClose={onClose} title={t('study.fieldLabel')} size="sm"
-      footer={<><Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button><Button onClick={() => onSave({ ...field, key: (key.trim() || slug(label) || field.key), label: label.trim(), description: description.trim() || null, type, list })}>{t('common.save')}</Button></>}>
+      footer={<div className="flex w-full items-center justify-between">
+        <Button variant="outline" onClick={() => onDuplicate(build())}><Copy className="w-4 h-4 mr-1" /> {t('study.duplicate')}</Button>
+        <div className="flex gap-2"><Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button><Button onClick={() => onSave(build())}>{t('common.save')}</Button></div>
+      </div>}>
       <div className="space-y-3">
         <Input label={t('study.fieldLabel')} value={label} onChange={(e) => setLabel(e.target.value)} />
         <Input label={t('study.fieldKey')} value={key} onChange={(e) => setKey(e.target.value)} placeholder={slug(label)} />

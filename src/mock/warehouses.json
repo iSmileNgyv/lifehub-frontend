@@ -1,0 +1,42 @@
+[
+  {
+    "id": "w1",
+    "name": "Mərkəzi Anbar",
+    "address": "Bakı, Nərimanov r., Əliağa Vahid küç. 12",
+    "managerId": "u2",
+    "managerName": "Nigar Məmmədova",
+    "type": "warehouse",
+    "status": "active",
+    "createdAt": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": "w2",
+    "name": "Restoran #1 - Nərimanov",
+    "address": "Bakı, Nərimanov r., Hüsü Hacıyev küç. 5",
+    "managerId": "u3",
+    "managerName": "Kamran Rəsulov",
+    "type": "restaurant",
+    "status": "active",
+    "createdAt": "2024-01-15T00:00:00Z"
+  },
+  {
+    "id": "w3",
+    "name": "Restoran #2 - Səbail",
+    "address": "Bakı, Səbail r., İstiqlaliyyət küç. 20",
+    "managerId": null,
+    "managerName": null,
+    "type": "restaurant",
+    "status": "active",
+    "createdAt": "2024-02-01T00:00:00Z"
+  },
+  {
+    "id": "w4",
+    "name": "Mağaza - Xətai",
+    "address": "Bakı, Xətai r., Koroğlu küç. 8",
+    "managerId": null,
+    "managerName": null,
+    "type": "store",
+    "status": "inactive",
+    "createdAt": "2024-03-01T00:00:00Z"
+  }
+]

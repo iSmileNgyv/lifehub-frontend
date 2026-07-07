@@ -1,0 +1,9 @@
+[
+  { "id": "m1", "name": "Kiloqram", "shortCode": "kg", "createdAt": "2024-01-01T00:00:00Z" },
+  { "id": "m2", "name": "Litr", "shortCode": "lt", "createdAt": "2024-01-01T00:00:00Z" },
+  { "id": "m3", "name": "Ədəd", "shortCode": "əd", "createdAt": "2024-01-01T00:00:00Z" },
+  { "id": "m4", "name": "Qutu", "shortCode": "qu", "createdAt": "2024-01-01T00:00:00Z" },
+  { "id": "m5", "name": "Paket", "shortCode": "pk", "createdAt": "2024-01-01T00:00:00Z" },
+  { "id": "m6", "name": "Ton", "shortCode": "t", "createdAt": "2024-01-01T00:00:00Z" },
+  { "id": "m7", "name": "Metr", "shortCode": "m", "createdAt": "2024-01-01T00:00:00Z" }
+]

@@ -1,0 +1,126 @@
+[
+  {
+    "id": "pr1",
+    "code": "PR-2024-001",
+    "title": "Yanvar ayı ət sifarişi",
+    "status": "delivered",
+    "requesterId": "u3",
+    "requesterName": "Kamran Rəsulov",
+    "warehouseId": "w2",
+    "warehouseName": "Restoran #1 - Nərimanov",
+    "items": [
+      { "id": "i1", "productId": "p1", "productName": "Mal əti (sümüksüz)", "quantity": 20, "measureUnitId": "m1", "measureUnitName": "kg", "estimatedPrice": 28.5, "agreedPrice": 26.0 },
+      { "id": "i2", "productId": "p2", "productName": "Toyuq döşü", "quantity": 30, "measureUnitId": "m1", "measureUnitName": "kg", "estimatedPrice": 12.0, "agreedPrice": 11.5 }
+    ],
+    "supplierId": "s1",
+    "supplierName": "AzərEt MMC",
+    "totalEstimated": 930,
+    "totalAgreed": 865,
+    "note": "Adi sifariş",
+    "createdAt": "2024-01-05T09:00:00Z",
+    "updatedAt": "2024-01-12T14:00:00Z"
+  },
+  {
+    "id": "pr2",
+    "code": "PR-2024-002",
+    "title": "Fevral içki sifarişi",
+    "status": "ordered",
+    "requesterId": "u3",
+    "requesterName": "Kamran Rəsulov",
+    "warehouseId": "w2",
+    "warehouseName": "Restoran #1 - Nərimanov",
+    "items": [
+      { "id": "i3", "productId": "p5", "productName": "Mineral su (1.5L)", "quantity": 200, "measureUnitId": "m3", "measureUnitName": "əd", "estimatedPrice": 1.2, "agreedPrice": 1.0 },
+      { "id": "i4", "productId": "p6", "productName": "Qara çay (100q)", "quantity": 10, "measureUnitId": "m4", "measureUnitName": "qu", "estimatedPrice": 8.0, "agreedPrice": 7.5 }
+    ],
+    "supplierId": "s2",
+    "supplierName": "FreshFood Group",
+    "totalEstimated": 320,
+    "totalAgreed": 275,
+    "note": null,
+    "createdAt": "2024-02-01T10:00:00Z",
+    "updatedAt": "2024-02-05T16:00:00Z"
+  },
+  {
+    "id": "pr3",
+    "code": "PR-2024-003",
+    "title": "Mart təmizlik malları",
+    "status": "approved",
+    "requesterId": "u3",
+    "requesterName": "Kamran Rəsulov",
+    "warehouseId": "w3",
+    "warehouseName": "Restoran #2 - Səbail",
+    "items": [
+      { "id": "i5", "productId": "p7", "productName": "Yuyucu maye (5L)", "quantity": 5, "measureUnitId": "m3", "measureUnitName": "əd", "estimatedPrice": 15.0, "agreedPrice": 14.0 },
+      { "id": "i6", "productId": "p8", "productName": "Dezinfeksiya məhlulu (1L)", "quantity": 10, "measureUnitId": "m3", "measureUnitName": "əd", "estimatedPrice": 12.0, "agreedPrice": 11.0 }
+    ],
+    "supplierId": "s3",
+    "supplierName": "CleanPro Azərbaycan",
+    "totalEstimated": 195,
+    "totalAgreed": 180,
+    "note": "Tez lazımdır",
+    "createdAt": "2024-03-01T08:30:00Z",
+    "updatedAt": "2024-03-03T11:00:00Z"
+  },
+  {
+    "id": "pr4",
+    "code": "PR-2024-004",
+    "title": "Həftəlik süd məhsulları",
+    "status": "in_review",
+    "requesterId": "u3",
+    "requesterName": "Kamran Rəsulov",
+    "warehouseId": "w2",
+    "warehouseName": "Restoran #1 - Nərimanov",
+    "items": [
+      { "id": "i7", "productId": "p3", "productName": "Qoç pendiri", "quantity": 10, "measureUnitId": "m1", "measureUnitName": "kg", "estimatedPrice": 18.0 },
+      { "id": "i8", "productId": "p4", "productName": "Yoğurt (500q)", "quantity": 50, "measureUnitId": "m3", "measureUnitName": "əd", "estimatedPrice": 2.5 }
+    ],
+    "supplierId": null,
+    "supplierName": null,
+    "totalEstimated": 305,
+    "totalAgreed": null,
+    "note": null,
+    "createdAt": "2024-03-10T09:00:00Z",
+    "updatedAt": "2024-03-10T09:00:00Z"
+  },
+  {
+    "id": "pr5",
+    "code": "PR-2024-005",
+    "title": "Qab sifariş - Səbail",
+    "status": "pending",
+    "requesterId": "u3",
+    "requesterName": "Kamran Rəsulov",
+    "warehouseId": "w3",
+    "warehouseName": "Restoran #2 - Səbail",
+    "items": [
+      { "id": "i9", "productId": "p9", "productName": "Birdəfəlik boşqab (50-lik)", "quantity": 20, "measureUnitId": "m4", "measureUnitName": "qu", "estimatedPrice": 6.5 }
+    ],
+    "supplierId": null,
+    "supplierName": null,
+    "totalEstimated": 130,
+    "totalAgreed": null,
+    "note": "Bayram üçün",
+    "createdAt": "2024-03-12T14:00:00Z",
+    "updatedAt": "2024-03-12T14:00:00Z"
+  },
+  {
+    "id": "pr6",
+    "code": "PR-2024-006",
+    "title": "Yeni həftə ət sifarişi",
+    "status": "draft",
+    "requesterId": "u3",
+    "requesterName": "Kamran Rəsulov",
+    "warehouseId": "w2",
+    "warehouseName": "Restoran #1 - Nərimanov",
+    "items": [
+      { "id": "i10", "productId": "p1", "productName": "Mal əti (sümüksüz)", "quantity": 15, "measureUnitId": "m1", "measureUnitName": "kg", "estimatedPrice": 28.5 }
+    ],
+    "supplierId": null,
+    "supplierName": null,
+    "totalEstimated": 427.5,
+    "totalAgreed": null,
+    "note": null,
+    "createdAt": "2024-03-14T10:00:00Z",
+    "updatedAt": "2024-03-14T10:00:00Z"
+  }
+]

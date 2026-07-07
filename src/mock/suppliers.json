@@ -1,0 +1,42 @@
+[
+  {
+    "id": "s1",
+    "name": "AzərEt MMC",
+    "contactPerson": "Rauf Əliyev",
+    "phone": "+994 50 123 45 67",
+    "email": "info@azeret.az",
+    "address": "Bakı, Binəqədi r., Sənaye küç. 14",
+    "status": "active",
+    "createdAt": "2024-01-05T00:00:00Z"
+  },
+  {
+    "id": "s2",
+    "name": "FreshFood Group",
+    "contactPerson": "Sevinc Quliyeva",
+    "phone": "+994 55 987 65 43",
+    "email": "contact@freshfood.az",
+    "address": "Bakı, Suraxanı r., Mübariz küç. 3",
+    "status": "active",
+    "createdAt": "2024-01-20T00:00:00Z"
+  },
+  {
+    "id": "s3",
+    "name": "CleanPro Azərbaycan",
+    "contactPerson": "Elnur Hüseynov",
+    "phone": "+994 70 456 78 90",
+    "email": "sales@cleanpro.az",
+    "address": "Bakı, Nizami r., Rəşid Behbudov küç. 7",
+    "status": "active",
+    "createdAt": "2024-02-10T00:00:00Z"
+  },
+  {
+    "id": "s4",
+    "name": "BakuDrinks İnc.",
+    "contactPerson": "Aytən Nəsiрova",
+    "phone": "+994 51 321 09 87",
+    "email": "orders@bakudrinks.az",
+    "address": "Bakı, Pirəkəşkül, Zavod küç. 1",
+    "status": "inactive",
+    "createdAt": "2024-02-25T00:00:00Z"
+  }
+]

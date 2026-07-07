@@ -1,0 +1,26 @@
+[
+  {
+    "id": "n1",
+    "title": "Yeni sifariş gəldi",
+    "message": "PR-2024-005 nömrəli sifariş təsdiq gözləyir",
+    "type": "info",
+    "read": false,
+    "createdAt": "2024-03-12T14:05:00Z"
+  },
+  {
+    "id": "n2",
+    "title": "Sifariş təsdiqləndi",
+    "message": "PR-2024-003 nömrəli sifariş təsdiqləndi",
+    "type": "success",
+    "read": false,
+    "createdAt": "2024-03-03T11:00:00Z"
+  },
+  {
+    "id": "n3",
+    "title": "Stok azdır",
+    "message": "Mal əti (sümüksüz) məhsulunun stoku minimum həddə yaxınlaşır",
+    "type": "warning",
+    "read": true,
+    "createdAt": "2024-03-10T08:00:00Z"
+  }
+]

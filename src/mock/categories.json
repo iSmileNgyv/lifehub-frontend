@@ -1,0 +1,66 @@
+[
+  {
+    "id": "c1",
+    "name": "Ərzaq məhsulları",
+    "parentId": null,
+    "children": [
+      {
+        "id": "c1-1",
+        "name": "Ət məhsulları",
+        "parentId": "c1",
+        "children": [
+          { "id": "c1-1-1", "name": "Mal əti", "parentId": "c1-1", "children": [] },
+          { "id": "c1-1-2", "name": "Toyuq əti", "parentId": "c1-1", "children": [] },
+          { "id": "c1-1-3", "name": "Balıq", "parentId": "c1-1", "children": [] }
+        ]
+      },
+      {
+        "id": "c1-2",
+        "name": "Süd məhsulları",
+        "parentId": "c1",
+        "children": [
+          { "id": "c1-2-1", "name": "Pendir", "parentId": "c1-2", "children": [] },
+          { "id": "c1-2-2", "name": "Yoğurt", "parentId": "c1-2", "children": [] },
+          { "id": "c1-2-3", "name": "Kərə yağı", "parentId": "c1-2", "children": [] }
+        ]
+      },
+      {
+        "id": "c1-3",
+        "name": "Tərəvəz və meyvə",
+        "parentId": "c1",
+        "children": [
+          { "id": "c1-3-1", "name": "Tərəvəz", "parentId": "c1-3", "children": [] },
+          { "id": "c1-3-2", "name": "Meyvə", "parentId": "c1-3", "children": [] }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "c2",
+    "name": "İçkilər",
+    "parentId": null,
+    "children": [
+      { "id": "c2-1", "name": "Alkoqolsuz içkilər", "parentId": "c2", "children": [] },
+      { "id": "c2-2", "name": "Çay və qəhvə", "parentId": "c2", "children": [] },
+      { "id": "c2-3", "name": "Su", "parentId": "c2", "children": [] }
+    ]
+  },
+  {
+    "id": "c3",
+    "name": "Təmizlik malları",
+    "parentId": null,
+    "children": [
+      { "id": "c3-1", "name": "Yuyucu vasitələr", "parentId": "c3", "children": [] },
+      { "id": "c3-2", "name": "Dezinfeksiya vasitələri", "parentId": "c3", "children": [] }
+    ]
+  },
+  {
+    "id": "c4",
+    "name": "Qablar və avadanlıq",
+    "parentId": null,
+    "children": [
+      { "id": "c4-1", "name": "Mətbəx qabları", "parentId": "c4", "children": [] },
+      { "id": "c4-2", "name": "Birdəfəlik qablar", "parentId": "c4", "children": [] }
+    ]
+  }
+]

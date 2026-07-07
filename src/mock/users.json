@@ -1,0 +1,28 @@
+[
+  {
+    "id": "u1",
+    "name": "Əli Həsənov",
+    "email": "ali@procurement.az",
+    "role": "admin",
+    "avatar": null,
+    "createdAt": "2024-01-10T08:00:00Z"
+  },
+  {
+    "id": "u2",
+    "name": "Nigar Məmmədova",
+    "email": "nigar@procurement.az",
+    "role": "procurement_officer",
+    "warehouseId": "w1",
+    "avatar": null,
+    "createdAt": "2024-02-15T08:00:00Z"
+  },
+  {
+    "id": "u3",
+    "name": "Kamran Rəsulов",
+    "email": "kamran@procurement.az",
+    "role": "requester",
+    "warehouseId": "w2",
+    "avatar": null,
+    "createdAt": "2024-03-01T08:00:00Z"
+  }
+]

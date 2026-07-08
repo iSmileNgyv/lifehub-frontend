@@ -25,7 +25,7 @@ export function parseImport(text: string): PortableTemplate | null {
       key: String(f.key ?? ''),
       label: String(f.label ?? ''),
       description: f.description == null ? '' : String(f.description),
-      type: (['text', 'textarea', 'rich', 'image'].includes(String(f.type)) ? f.type : 'text') as TemplateField['type'],
+      type: (['text', 'textarea', 'rich', 'image', 'heading'].includes(String(f.type)) ? f.type : 'text') as TemplateField['type'],
       side: (f.side === 'back' ? 'back' : 'front') as TemplateField['side'],
       section: f.section == null ? null : String(f.section),
       list: !!f.list,
@@ -33,6 +33,9 @@ export function parseImport(text: string): PortableTemplate | null {
       y: f.y == null ? null : Number(f.y),
       w: f.w == null ? null : Number(f.w),
       h: f.h == null ? null : Number(f.h),
+      level: (['h1', 'h2', 'h3', 'h4'].includes(String(f.level)) ? f.level : undefined) as TemplateField['level'],
+      color: f.color == null ? null : String(f.color),
+      align: (['left', 'center', 'right'].includes(String(f.align)) ? f.align : undefined) as TemplateField['align'],
     } as TemplateField;
   }).filter((f) => f.key);
   if (fields.length === 0) return null;

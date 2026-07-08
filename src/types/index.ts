@@ -96,8 +96,10 @@ export interface StudyCard {
 }
 
 // Kart şablonu (formul) — deck səviyyəsində
-export type FieldType = 'text' | 'textarea' | 'rich' | 'image';
+export type FieldType = 'text' | 'textarea' | 'rich' | 'image' | 'heading';
 export type FieldSide = 'front' | 'back';
+export type HeadingLevel = 'h1' | 'h2' | 'h3' | 'h4';
+export type FieldAlign = 'left' | 'center' | 'right';
 export interface TemplateField {
   key: string;
   label: string;
@@ -111,6 +113,10 @@ export interface TemplateField {
   y?: number;
   w?: number;
   h?: number;
+  // Yalnız type='heading' üçün: statik başlıq (kart datası deyil, AI-a getmir)
+  level?: HeadingLevel;
+  color?: string | null;
+  align?: FieldAlign;
 }
 export interface CardTemplate {
   uid: string;

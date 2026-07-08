@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDraggable, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
-import { X, Plus, Trash2, GripVertical, Pencil, ArrowLeftRight, Type, AlignLeft, Bold, Sparkles, Image as ImageIcon, Copy, Upload, FileText } from 'lucide-react';
+import { X, Plus, Trash2, GripVertical, Pencil, ArrowLeftRight, Type, AlignLeft, Bold, Sparkles, Image as ImageIcon, Copy, Upload, FileText, Heading } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { templateService } from '@/services/studyService';
 import { parseImport } from '@/lib/templateIO';
@@ -10,7 +10,7 @@ import { ApiError } from '@/lib/api';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import type { CardTemplate, TemplateField, FieldType, FieldSide } from '@/types';
+import type { CardTemplate, TemplateField, FieldType, FieldSide, HeadingLevel, FieldAlign } from '@/types';
 
 const COLS = 12;
 const ROW_H = 52; // px
@@ -20,7 +20,8 @@ let idc = 0;
 const slug = (s: string) =>
   s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60);
 
-const typeIcon = (t: FieldType) => (t === 'textarea' ? AlignLeft : t === 'rich' ? Bold : t === 'image' ? ImageIcon : Type);
+const typeIcon = (t: FieldType) => (t === 'textarea' ? AlignLeft : t === 'rich' ? Bold : t === 'image' ? ImageIcon : t === 'heading' ? Heading : Type);
+const HEAD_COLORS = ['#111827', '#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#6b7280'];
 
 // Köhnə / koordinatsız sahələrə default grid mövqe ver (tərəf üzrə 2 sütun axını)
 function normalize(fields: TemplateField[]): TemplateField[] {
@@ -264,6 +265,15 @@ function FieldBlock({ field, onEdit, onRemove, onToggle, onResize }: {
 
 function BlockInner({ field, overlay }: { field: TemplateField; overlay?: boolean }) {
   const Icon = typeIcon(field.type);
+  if (field.type === 'heading') {
+    return (
+      <div className={`flex items-center gap-1.5 min-w-0 ${overlay ? 'rounded-lg border bg-white dark:bg-gray-900 px-2 py-1.5 shadow-xl' : ''}`}
+        style={{ justifyContent: field.align === 'center' ? 'center' : field.align === 'right' ? 'flex-end' : 'flex-start' }}>
+        <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: field.color || '#111827' }} />
+        <span className="text-sm font-bold truncate" style={{ color: field.color || '#111827' }}>{field.label || <span className="text-gray-400 italic font-normal">başlıq</span>}</span>
+      </div>
+    );
+  }
   return (
     <div className={`flex items-center gap-1.5 min-w-0 ${overlay ? 'rounded-lg border bg-white dark:bg-gray-900 px-2 py-1.5 shadow-xl' : ''}`}>
       <Icon className="w-3.5 h-3.5 text-violet-400 shrink-0" />
@@ -279,21 +289,24 @@ function FieldEditModal({ field, onClose, onSave, onDuplicate }: { field: Templa
   const [description, setDescription] = useState(field.description ?? '');
   const [type, setType] = useState<FieldType>(field.type);
   const [list, setList] = useState(!!field.list);
+  const [level, setLevel] = useState<HeadingLevel>(field.level ?? 'h2');
+  const [color, setColor] = useState<string>(field.color ?? '#111827');
+  const [align, setAlign] = useState<FieldAlign>(field.align ?? 'center');
+  const isHeading = type === 'heading';
   const sel = 'w-full h-9 px-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-violet-500';
-  const build = (): TemplateField => ({ ...field, key: (key.trim() || slug(label) || field.key), label: label.trim(), description: description.trim() || null, type, list });
+  const build = (): TemplateField => {
+    const base = { ...field, key: (key.trim() || slug(label) || field.key), label: label.trim(), type };
+    return isHeading
+      ? { ...base, description: null, list: false, level, color, align }
+      : { ...base, description: description.trim() || null, list, level: undefined, color: undefined, align: undefined };
+  };
   return (
-    <Modal open onClose={onClose} title={t('study.fieldLabel')} size="sm"
+    <Modal open onClose={onClose} title={isHeading ? t('study.typeHeading') : t('study.fieldLabel')} size="sm"
       footer={<div className="flex w-full items-center justify-between">
         <Button variant="outline" onClick={() => onDuplicate(build())}><Copy className="w-4 h-4 mr-1" /> {t('study.duplicate')}</Button>
         <div className="flex gap-2"><Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button><Button onClick={() => onSave(build())}>{t('common.save')}</Button></div>
       </div>}>
       <div className="space-y-3">
-        <Input label={t('study.fieldLabel')} value={label} onChange={(e) => setLabel(e.target.value)} />
-        <Input label={t('study.fieldKey')} value={key} onChange={(e) => setKey(e.target.value)} placeholder={slug(label)} />
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('study.fieldDesc')}</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full min-h-[60px] px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-violet-500 resize-y" />
-        </div>
         <div className="space-y-1">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('study.fieldType')}</label>
           <select value={type} onChange={(e) => setType(e.target.value as FieldType)} className={sel}>
@@ -301,12 +314,58 @@ function FieldEditModal({ field, onClose, onSave, onDuplicate }: { field: Templa
             <option value="textarea">{t('study.typeTextarea')}</option>
             <option value="rich">{t('study.typeRich')}</option>
             <option value="image">{t('study.typeImage')}</option>
+            <option value="heading">{t('study.typeHeading')}</option>
           </select>
         </div>
-        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer pt-1">
-          <input type="checkbox" checked={list} onChange={(e) => setList(e.target.checked)} className="w-4 h-4 rounded" />
-          {t('study.showInList')}
-        </label>
+
+        <Input label={isHeading ? t('study.headingText') : t('study.fieldLabel')} value={label} onChange={(e) => setLabel(e.target.value)} />
+
+        {isHeading ? (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('study.headingLevel')}</label>
+                <select value={level} onChange={(e) => setLevel(e.target.value as HeadingLevel)} className={sel}>
+                  <option value="h1">H1</option>
+                  <option value="h2">H2</option>
+                  <option value="h3">H3</option>
+                  <option value="h4">H4</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('study.headingAlign')}</label>
+                <select value={align} onChange={(e) => setAlign(e.target.value as FieldAlign)} className={sel}>
+                  <option value="left">{t('study.alignLeft')}</option>
+                  <option value="center">{t('study.alignCenter')}</option>
+                  <option value="right">{t('study.alignRight')}</option>
+                </select>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('study.headingColor')}</label>
+              <div className="flex items-center gap-2">
+                {HEAD_COLORS.map((c) => (
+                  <button key={c} type="button" onClick={() => setColor(c)}
+                    className={`w-7 h-7 rounded-full border-2 ${color === c ? 'border-violet-500 scale-110' : 'border-transparent'}`}
+                    style={{ backgroundColor: c }} />
+                ))}
+                <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-8 h-8 rounded cursor-pointer bg-transparent" />
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <Input label={t('study.fieldKey')} value={key} onChange={(e) => setKey(e.target.value)} placeholder={slug(label)} />
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('study.fieldDesc')}</label>
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full min-h-[60px] px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-violet-500 resize-y" />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer pt-1">
+              <input type="checkbox" checked={list} onChange={(e) => setList(e.target.checked)} className="w-4 h-4 rounded" />
+              {t('study.showInList')}
+            </label>
+          </>
+        )}
       </div>
     </Modal>
   );

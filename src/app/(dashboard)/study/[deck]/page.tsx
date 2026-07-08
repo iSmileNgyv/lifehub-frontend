@@ -14,6 +14,7 @@ import Modal from '@/components/ui/Modal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { EntityImage } from '@/components/ui/EntityImage';
 import { RichInput, RichView } from '@/components/study/RichText';
+import TemplateSideView from '@/components/study/TemplateSideView';
 import type { AiBulkResult } from '@/services/studyService';
 import type { Card, CardTemplate, TemplateField } from '@/types';
 
@@ -158,6 +159,7 @@ function TemplateCardForm({ deck, template, card, onClose, onSaved }: { deck: st
 
   const sections: { name: string; fields: TemplateField[] }[] = [];
   for (const f of template.fields) {
+    if (f.type === 'heading') continue; // statik başlıq — doldurulmur
     const name = f.section || '';
     let sec = sections.find((s) => s.name === name);
     if (!sec) { sec = { name, fields: [] }; sections.push(sec); }
@@ -295,35 +297,14 @@ function CardPreviewModal({ card, template, onClose }: { card: Card; template: C
   );
 }
 
-// Kətan layout görünüşü — sahələr x/y/w/h grid mövqelərində
+// Kətan layout görünüşü — sahələr x/y/w/h grid mövqelərində (TemplateSideView vasitəsilə)
 function GridCardView({ card, template }: { card: Card; template: CardTemplate }) {
   const values = card.fields ?? {};
-  const COLS = 12;
-  const renderSide = (side: 'front' | 'back') => {
-    const fs = template.fields.filter((f) => f.side === side && values[f.key]);
-    if (!fs.length) return null;
-    return (
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${COLS}, 1fr)`, gridAutoRows: 'minmax(48px, auto)', gap: 8 }}>
-        {fs.map((f) => (
-          <div key={f.key} style={{ gridColumn: `${(f.x ?? 0) + 1} / span ${f.w ?? 1}`, gridRow: `${(f.y ?? 0) + 1} / span ${f.h ?? 1}` }}
-            className="rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/30 px-3 py-2 flex flex-col justify-center">
-            <p className="text-[10px] uppercase tracking-wide text-gray-400 truncate">{f.label}</p>
-            {f.type === 'image'
-              ? <EntityImage uid={values[f.key]} initial="?" className="max-h-32 w-auto rounded-lg object-contain mt-1" />
-              : f.type === 'rich'
-                ? <RichView html={values[f.key]} className="text-base font-semibold text-gray-900 dark:text-white whitespace-pre-wrap break-words" />
-                : <p className="text-base font-semibold text-gray-900 dark:text-white whitespace-pre-wrap break-words">{values[f.key]}</p>}
-          </div>
-        ))}
-      </div>
-    );
-  };
-  const front = renderSide('front');
-  const back = renderSide('back');
+  const hasBack = template.fields.some((f) => f.side === 'back' && (f.type === 'heading' || values[f.key]));
   return (
     <div className="w-full max-w-4xl">
-      {front}
-      {back && <div className="mt-6 pt-6 border-t-2 border-dashed border-gray-200 dark:border-gray-800">{back}</div>}
+      <TemplateSideView values={values} template={template} side="front" />
+      {hasBack && <div className="mt-6 pt-6 border-t-2 border-dashed border-gray-200 dark:border-gray-800"><TemplateSideView values={values} template={template} side="back" /></div>}
     </div>
   );
 }

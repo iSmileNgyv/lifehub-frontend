@@ -32,6 +32,8 @@ export default function DeckCardsPage() {
   const [previewCard, setPreviewCard] = useState<Card | null>(null);
   const [template, setTemplate] = useState<CardTemplate | null>(null);
   const [bulkAi, setBulkAi] = useState(false);
+  const [confirmFill, setConfirmFill] = useState(false);
+  const [fillState, setFillState] = useState<{ done: number; total: number } | null>(null);
 
   const load = useCallback(() => { setLoading(true); cardService.list(deck).then((r) => setCards(r.data)).catch((e) => setError(e instanceof ApiError ? e.message : '')).finally(() => setLoading(false)); }, [deck]);
   useEffect(() => { load(); }, [load]);
@@ -52,6 +54,41 @@ export default function DeckCardsPage() {
     catch (e) { setError(e instanceof ApiError ? e.message : t('common.error')); }
   };
 
+  // Deck-də bütün kartların BOŞ sahələrini AI ilə doldur (doldurulmuşa toxunmur)
+  const runFillBlanksAll = async () => {
+    setConfirmFill(false);
+    if (!template) return;
+    const aiKeys = template.fields.filter((f) => ['text', 'textarea', 'rich'].includes(f.type)).map((f) => f.key);
+    const frontKey = template.fields.find((f) => f.side === 'front' && ['text', 'textarea', 'rich'].includes(f.type))?.key;
+    if (!frontKey) { setError(t('common.error')); return; }
+    const emptyOf = (c: Card) => aiKeys.filter((k) => !String(c.fields?.[k] ?? '').trim());
+    const targets = cards.filter((c) => c.fields && String(c.fields[frontKey] ?? '').trim() && emptyOf(c).length);
+    if (!targets.length) { setError(t('study.noBlanks')); return; }
+    const only = Array.from(new Set(targets.flatMap(emptyOf)));
+    const byWord = new Map<string, Card>();
+    targets.forEach((c) => byWord.set(String(c.fields![frontKey]).trim(), c));
+    const words = Array.from(byWord.keys());
+
+    setError(''); setFillState({ done: 0, total: targets.length });
+    let done = 0;
+    try {
+      for (let i = 0; i < words.length; i += 40) {
+        const chunk = words.slice(i, i + 40);
+        const r = await aiService.generateBulk(template.uid, chunk, only);
+        for (const res of r.results) {
+          const c = byWord.get(res.word);
+          if (!c || !res.fields) continue;
+          const merged = { ...(c.fields ?? {}) };
+          let changed = false;
+          for (const k of emptyOf(c)) { const v = res.fields[k]; if (v != null && v !== '') { merged[k] = v; changed = true; } }
+          if (changed) { await cardService.update(deck, c.uid, { fields: merged }); }
+          done++; setFillState({ done, total: targets.length });
+        }
+      }
+    } catch (e) { setError(e instanceof ApiError ? e.message : t('common.error')); }
+    finally { setFillState(null); load(); }
+  };
+
   return (
     <div>
       <button onClick={() => router.push('/study')} className="mb-3 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800"><ArrowLeft className="w-4 h-4" /> {t('study.title')}</button>
@@ -59,6 +96,11 @@ export default function DeckCardsPage() {
         actions={<div className="flex gap-2">
           <Button variant="outline" onClick={() => router.push(`/study/${deck}/learn`)}><Play className="w-4 h-4 mr-1" /> {t('study.study')}</Button>
           {template && can('STUDY_CREATE') && <Button variant="outline" onClick={() => setBulkAi(true)}><Sparkles className="w-4 h-4 mr-1" /> {t('study.aiBulk')}</Button>}
+          {template && can('STUDY_UPDATE') && cards.length > 0 && (
+            <Button variant="outline" onClick={() => setConfirmFill(true)} loading={!!fillState}>
+              <Sparkles className="w-4 h-4 mr-1" /> {fillState ? `${fillState.done}/${fillState.total}` : t('study.aiFillBlanksAll')}
+            </Button>
+          )}
           {can('STUDY_CREATE') && <Button onClick={() => setForm('new')}><Plus className="w-4 h-4 mr-1" /> {t('study.newCard')}</Button>}
         </div>} />
       {error && <div className="mb-4 flex items-center justify-between px-4 py-2.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-sm text-red-600">{error}<button onClick={() => setError('')}><X className="w-4 h-4" /></button></div>}
@@ -107,6 +149,7 @@ export default function DeckCardsPage() {
       {bulkAi && template && <BulkAiModal deck={deck} template={template} onClose={() => setBulkAi(false)} onDone={() => { setBulkAi(false); load(); }} />}
       {previewCard && <CardPreviewModal card={previewCard} template={template} onClose={() => setPreviewCard(null)} />}
       <ConfirmDialog open={!!del} message={del ? t('study.deleteCardWarn') : ''} onConfirm={doDelete} onCancel={() => setDel(null)} />
+      <ConfirmDialog open={confirmFill} message={t('study.aiFillBlanksAllConfirm')} onConfirm={runFillBlanksAll} onCancel={() => setConfirmFill(false)} />
     </div>
   );
 }
@@ -141,18 +184,39 @@ function TemplateCardForm({ deck, template, card, onClose, onSaved }: { deck: st
   const [values, setValues] = useState<Record<string, string>>(() => ({ ...(card?.fields ?? {}) }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [aiWord, setAiWord] = useState('');
-  const [aiLoading, setAiLoading] = useState(false);
+  // AI-nın dolduracağı mətn sahələri; söz mənbəyi = ön sahə
+  const aiKeys = template.fields.filter((f) => ['text', 'textarea', 'rich'].includes(f.type)).map((f) => f.key);
+  const frontKey = template.fields.find((f) => f.side === 'front' && ['text', 'textarea', 'rich'].includes(f.type))?.key;
+  const [aiWord, setAiWord] = useState(() => (frontKey ? String(card?.fields?.[frontKey] ?? '') : ''));
+  const [aiLoading, setAiLoading] = useState<false | 'all' | 'blanks'>(false);
   const [aiError, setAiError] = useState('');
 
   const set = (key: string, v: string) => setValues((s) => ({ ...s, [key]: v }));
 
+  // Bütün sahələri doldur (mövcudları da əvəz edir)
   const aiFill = async () => {
     if (!aiWord.trim()) return;
-    setAiLoading(true); setAiError('');
+    setAiLoading('all'); setAiError('');
     try {
       const r = await aiService.generate(template.uid, aiWord.trim());
       setValues((v) => ({ ...v, ...r.fields }));
+    } catch (e) { setAiError(e instanceof ApiError ? e.message : t('common.error')); }
+    finally { setAiLoading(false); }
+  };
+
+  // Yalnız boş sahələri doldur (doldurulmuşlara toxunmur) — şablona yeni sahə əlavə edəndə
+  const fillBlanks = async () => {
+    if (!aiWord.trim()) return;
+    const empty = aiKeys.filter((k) => !String(values[k] ?? '').trim());
+    if (!empty.length) { setAiError(t('study.noBlanks')); return; }
+    setAiLoading('blanks'); setAiError('');
+    try {
+      const r = await aiService.generate(template.uid, aiWord.trim(), empty);
+      setValues((v) => {
+        const nv = { ...v };
+        for (const k of empty) { const val = r.fields[k]; if (val != null && val !== '') nv[k] = val; }
+        return nv;
+      });
     } catch (e) { setAiError(e instanceof ApiError ? e.message : t('common.error')); }
     finally { setAiLoading(false); }
   };
@@ -190,11 +254,13 @@ function TemplateCardForm({ deck, template, card, onClose, onSaved }: { deck: st
 
         <div className="rounded-xl border border-violet-200 dark:border-violet-900 bg-violet-50/50 dark:bg-violet-950/20 p-3">
           <p className="text-xs font-medium text-violet-700 dark:text-violet-300 mb-1.5 flex items-center gap-1"><Sparkles className="w-3.5 h-3.5" /> {t('study.aiFill')}</p>
-          <div className="flex gap-2">
-            <input value={aiWord} onChange={(e) => setAiWord(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); aiFill(); } }}
-              placeholder={t('study.aiWordPlaceholder')} className="flex-1 h-9 px-3 rounded-lg border border-violet-200 dark:border-violet-800 bg-white dark:bg-gray-900 text-sm outline-none focus:border-violet-500" />
-            <Button variant="outline" onClick={aiFill} loading={aiLoading}><Sparkles className="w-4 h-4 mr-1" /> {t('study.aiGenerate')}</Button>
+          <div className="flex flex-wrap gap-2">
+            <input value={aiWord} onChange={(e) => setAiWord(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); fillBlanks(); } }}
+              placeholder={t('study.aiWordPlaceholder')} className="flex-1 min-w-[140px] h-9 px-3 rounded-lg border border-violet-200 dark:border-violet-800 bg-white dark:bg-gray-900 text-sm outline-none focus:border-violet-500" />
+            <Button variant="outline" onClick={fillBlanks} loading={aiLoading === 'blanks'} disabled={aiLoading === 'all'}><Sparkles className="w-4 h-4 mr-1" /> {t('study.aiFillBlanks')}</Button>
+            <Button variant="outline" onClick={aiFill} loading={aiLoading === 'all'} disabled={aiLoading === 'blanks'}>{t('study.aiGenerate')}</Button>
           </div>
+          <p className="mt-1.5 text-[11px] text-violet-600/70 dark:text-violet-300/60">{t('study.aiFillBlanksHint')}</p>
           {aiError && <p className="mt-1.5 text-xs text-red-500">{aiError}</p>}
         </div>
 

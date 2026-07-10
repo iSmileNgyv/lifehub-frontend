@@ -50,10 +50,10 @@ export interface AiBulkResult {
 }
 
 export const aiService = {
-  generate: (template: string, word: string) =>
-    api<{ fields: Record<string, string> }>(`/study/templates/${template}/generate`, { method: 'POST', body: JSON.stringify({ word }) }),
-  generateBulk: (template: string, words: string[]) =>
-    api<{ results: AiBulkResult[] }>(`/study/templates/${template}/generate-bulk`, { method: 'POST', body: JSON.stringify({ words }) }),
+  generate: (template: string, word: string, only?: string[]) =>
+    api<{ fields: Record<string, string> }>(`/study/templates/${template}/generate`, { method: 'POST', body: JSON.stringify(only && only.length ? { word, only } : { word }) }),
+  generateBulk: (template: string, words: string[], only?: string[]) =>
+    api<{ results: AiBulkResult[] }>(`/study/templates/${template}/generate-bulk`, { method: 'POST', body: JSON.stringify(only && only.length ? { words, only } : { words }) }),
 };
 
 export const studyService = {

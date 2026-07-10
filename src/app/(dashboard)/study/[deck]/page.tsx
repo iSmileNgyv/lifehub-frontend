@@ -54,35 +54,63 @@ export default function DeckCardsPage() {
     catch (e) { setError(e instanceof ApiError ? e.message : t('common.error')); }
   };
 
-  // Deck-də bütün kartların BOŞ sahələrini AI ilə doldur (doldurulmuşa toxunmur)
+  // Deck-də bütün kartların BOŞ sahələrini AI ilə doldur (doldurulmuşa toxunmur).
+  // Batch-dan sonra qalan boşluqları təkbətək təkrar doldurur — boşluq qalmasın deyə.
   const runFillBlanksAll = async () => {
     setConfirmFill(false);
     if (!template) return;
     const aiKeys = template.fields.filter((f) => ['text', 'textarea', 'rich'].includes(f.type)).map((f) => f.key);
     const frontKey = template.fields.find((f) => f.side === 'front' && ['text', 'textarea', 'rich'].includes(f.type))?.key;
     if (!frontKey) { setError(t('common.error')); return; }
-    const emptyOf = (c: Card) => aiKeys.filter((k) => !String(c.fields?.[k] ?? '').trim());
-    const targets = cards.filter((c) => c.fields && String(c.fields[frontKey] ?? '').trim() && emptyOf(c).length);
-    if (!targets.length) { setError(t('study.noBlanks')); return; }
-    const only = Array.from(new Set(targets.flatMap(emptyOf)));
-    const byWord = new Map<string, Card>();
-    targets.forEach((c) => byWord.set(String(c.fields![frontKey]).trim(), c));
-    const words = Array.from(byWord.keys());
+    const emptyKeys = (f: Record<string, string>) => aiKeys.filter((k) => !String(f[k] ?? '').trim());
 
-    setError(''); setFillState({ done: 0, total: targets.length });
-    let done = 0;
+    type WorkItem = { uid: string; fields: Record<string, string>; word: string };
+    const work: WorkItem[] = [];
+    for (const c of cards) {
+      const f = { ...(c.fields ?? {}) };
+      const word = String(f[frontKey] ?? '').trim();
+      if (word && emptyKeys(f).length) work.push({ uid: c.uid, fields: f, word });
+    }
+    const total = work.length;
+    if (!total) { setError(t('study.noBlanks')); return; }
+    setError(''); setFillState({ done: 0, total });
+
+    const persist = (w: WorkItem) => cardService.update(deck, w.uid, { fields: w.fields });
+    const progress = () => setFillState({ done: total - work.filter((w) => emptyKeys(w.fields).length).length, total });
+
+    const MAX_PASSES = 4;
     try {
-      for (let i = 0; i < words.length; i += 40) {
-        const chunk = words.slice(i, i + 40);
-        const r = await aiService.generateBulk(template.uid, chunk, only);
-        for (const res of r.results) {
-          const c = byWord.get(res.word);
-          if (!c || !res.fields) continue;
-          const merged = { ...(c.fields ?? {}) };
-          let changed = false;
-          for (const k of emptyOf(c)) { const v = res.fields[k]; if (v != null && v !== '') { merged[k] = v; changed = true; } }
-          if (changed) { await cardService.update(deck, c.uid, { fields: merged }); }
-          done++; setFillState({ done, total: targets.length });
+      for (let pass = 0; pass < MAX_PASSES; pass++) {
+        const remaining = work.filter((w) => emptyKeys(w.fields).length);
+        if (!remaining.length) break;
+
+        if (pass === 0) {
+          // İlk keçid: batch (ucuz) — yalnız boş açarların birləşməsi
+          const only = Array.from(new Set(remaining.flatMap((w) => emptyKeys(w.fields))));
+          const byWord = new Map<string, WorkItem>();
+          remaining.forEach((w) => byWord.set(w.word, w));
+          const words = Array.from(byWord.keys());
+          for (let i = 0; i < words.length; i += 40) {
+            const r = await aiService.generateBulk(template.uid, words.slice(i, i + 40), only);
+            for (const res of r.results) {
+              const w = byWord.get(res.word);
+              if (!w || !res.fields) continue;
+              let changed = false;
+              for (const k of emptyKeys(w.fields)) { const v = res.fields[k]; if (v != null && v !== '') { w.fields[k] = v; changed = true; } }
+              if (changed) await persist(w);
+            }
+            progress();
+          }
+        } else {
+          // Növbəti keçidlər: qalanları təkbətək (etibarlı) doldur
+          for (const w of remaining) {
+            const only = emptyKeys(w.fields);
+            const r = await aiService.generate(template.uid, w.word, only);
+            let changed = false;
+            for (const k of only) { const v = r.fields[k]; if (v != null && v !== '') { w.fields[k] = v; changed = true; } }
+            if (changed) await persist(w);
+            progress();
+          }
         }
       }
     } catch (e) { setError(e instanceof ApiError ? e.message : t('common.error')); }
@@ -204,19 +232,24 @@ function TemplateCardForm({ deck, template, card, onClose, onSaved }: { deck: st
     finally { setAiLoading(false); }
   };
 
-  // Yalnız boş sahələri doldur (doldurulmuşlara toxunmur) — şablona yeni sahə əlavə edəndə
+  // Yalnız boş sahələri doldur (doldurulmuşlara toxunmur) — şablona yeni sahə əlavə edəndə.
+  // Boşluq qalmasın deyə bir neçə cəhd edir.
   const fillBlanks = async () => {
     if (!aiWord.trim()) return;
-    const empty = aiKeys.filter((k) => !String(values[k] ?? '').trim());
-    if (!empty.length) { setAiError(t('study.noBlanks')); return; }
+    let cur = { ...values };
+    const emptyOf = () => aiKeys.filter((k) => !String(cur[k] ?? '').trim());
+    if (!emptyOf().length) { setAiError(t('study.noBlanks')); return; }
     setAiLoading('blanks'); setAiError('');
     try {
-      const r = await aiService.generate(template.uid, aiWord.trim(), empty);
-      setValues((v) => {
-        const nv = { ...v };
-        for (const k of empty) { const val = r.fields[k]; if (val != null && val !== '') nv[k] = val; }
-        return nv;
-      });
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const empty = emptyOf();
+        if (!empty.length) break;
+        const r = await aiService.generate(template.uid, aiWord.trim(), empty);
+        let changed = false;
+        for (const k of empty) { const val = r.fields[k]; if (val != null && val !== '') { cur[k] = val; changed = true; } }
+        if (!changed) break; // AI daha doldura bilmir
+      }
+      setValues(cur);
     } catch (e) { setAiError(e instanceof ApiError ? e.message : t('common.error')); }
     finally { setAiLoading(false); }
   };

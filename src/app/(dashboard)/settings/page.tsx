@@ -9,6 +9,7 @@ import {
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { authService } from '@/services/authService';
+import { settingService } from '@/services/settingService';
 import { ApiError } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import PageHeader from '@/components/ui/PageHeader';
@@ -26,7 +27,16 @@ const languages: { code: Language; label: string; flag: string; native: string }
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
-  const { user, roles, updateProfile, logout } = useAuth();
+  const { user, roles, updateProfile, logout, can } = useAuth();
+  const [regEnabled, setRegEnabled] = useState<boolean | null>(null);
+  const [regBusy, setRegBusy] = useState(false);
+  useEffect(() => { if (can('SETTINGS_VIEW')) settingService.get().then((s) => setRegEnabled(s.registration_enabled)).catch(() => {}); }, [can]);
+  const toggleReg = async () => {
+    if (regEnabled === null) return;
+    setRegBusy(true);
+    try { const s = await settingService.update({ registration_enabled: !regEnabled }); setRegEnabled(s.registration_enabled); }
+    catch { /* */ } finally { setRegBusy(false); }
+  };
   const router = useRouter();
 
   // next-themes hidrasiya: seçimi yalnız mount-dan sonra göstər
@@ -297,6 +307,30 @@ export default function SettingsPage() {
           </Button>
         </div>
       </section>
+
+      {/* Sistem: qeydiyyat (yalnız SETTINGS_VIEW) */}
+      {regEnabled !== null && (
+        <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
+            <Shield className="w-4 h-4 text-gray-400" />
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">{t('settings.system')}</h2>
+          </div>
+          <div className="p-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">{t('settings.registration')}</p>
+              <p className="text-xs text-gray-400">{t('settings.registrationHint')}</p>
+            </div>
+            <button
+              onClick={toggleReg}
+              disabled={!can('SETTINGS_MANAGE') || regBusy}
+              className={cn('relative w-11 h-6 rounded-full transition-colors shrink-0 disabled:opacity-50',
+                regEnabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-700')}
+            >
+              <span className={cn('absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform', regEnabled && 'translate-x-5')} />
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Logout */}
       <button

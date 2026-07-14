@@ -24,6 +24,18 @@ export const authService = {
     return { user: data.user, permissions: data.permissions, roles: data.roles };
   },
 
+  /** Self-register açıqdırmı (public, login-dən əvvəl). */
+  registrationStatus: () => api<{ enabled: boolean }>('/auth/registration-status'),
+
+  register: async (name: string, username: string, password: string): Promise<SessionData> => {
+    const data = await api<LoginResponse>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ name, username, password }),
+    });
+    setToken(data.token);
+    return { user: data.user, permissions: data.permissions, roles: data.roles };
+  },
+
   logout: async (): Promise<void> => {
     try {
       await api('/auth/logout', { method: 'POST' });

@@ -20,8 +20,8 @@ interface PickerModalProps<T> {
   /** Səhifə-səhifə yüklə (axtarış + paginate). Non-paginate servislər üçün last_page=1 qaytarın. */
   fetchPage: (q: string, page: number) => Promise<PickerPage<T>>;
   keyOf: (item: T) => string;
-  /** Bir elementi render et — `pick` ona klikləyəndə onu seçir. */
-  renderItem: (item: T, pick: () => void) => React.ReactNode;
+  /** Bir elementi render et — `pick` seçir; `actions.edit`/`actions.del` idarə (verilibsə). */
+  renderItem: (item: T, pick: () => void, actions: { edit: () => void; del: () => void }) => React.ReactNode;
   onPick: (item: T) => void;
   layout?: 'grid' | 'list';
   searchPlaceholder?: string;
@@ -31,19 +31,26 @@ interface PickerModalProps<T> {
   createLabel?: string;
   createTitle?: string;
   renderCreate?: (onCreated: (item: T) => void, onCancel: () => void) => React.ReactNode;
+  /** Redaktə forması (verilibsə edit düyməsi işləyir). onSaved → siyahı yenilənir. */
+  renderEdit?: (item: T, onSaved: () => void, onCancel: () => void) => React.ReactNode;
+  editTitle?: string;
+  /** Sil (verilibsə delete düyməsi işləyir). */
+  onDelete?: (item: T) => Promise<void>;
 }
 
 export default function PickerModal<T>({
   open, title, onClose, fetchPage, keyOf, renderItem, onPick,
   layout = 'list', searchPlaceholder, emptyText,
   canCreate, createLabel, createTitle, renderCreate,
+  renderEdit, editTitle, onDelete,
 }: PickerModalProps<T>) {
   const { t } = useLanguage();
 
   const fetchRef = useRef(fetchPage);
   fetchRef.current = fetchPage;
 
-  const [mode, setMode] = useState<'list' | 'create'>('list');
+  const [mode, setMode] = useState<'list' | 'create' | 'edit'>('list');
+  const [editItem, setEditItem] = useState<T | null>(null);
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
   const [items, setItems] = useState<T[]>([]);
@@ -81,14 +88,27 @@ export default function PickerModal<T>({
     if (open && mode === 'list') load(1, debounced, false);
   }, [open, mode, debounced, load]);
 
+  const del = async (item: T) => {
+    if (!onDelete) return;
+    try { await onDelete(item); setItems((prev) => prev.filter((x) => keyOf(x) !== keyOf(item))); }
+    catch (e) { setError(e instanceof ApiError ? e.message : t('common.error')); }
+  };
+
   return (
-    <Modal open={open} onClose={onClose} title={mode === 'create' ? (createTitle || title) : title} size="lg">
+    <Modal open={open} onClose={onClose} title={mode === 'create' ? (createTitle || title) : mode === 'edit' ? (editTitle || title) : title} size="lg">
       {mode === 'create' && renderCreate ? (
         <div className="space-y-3">
           <button onClick={() => setMode('list')} className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
             <ArrowLeft className="w-4 h-4" /> {t('common.back')}
           </button>
           {renderCreate((item) => onPick(item), () => setMode('list'))}
+        </div>
+      ) : mode === 'edit' && renderEdit && editItem ? (
+        <div className="space-y-3">
+          <button onClick={() => setMode('list')} className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
+            <ArrowLeft className="w-4 h-4" /> {t('common.back')}
+          </button>
+          {renderEdit(editItem, () => { setMode('list'); load(1, debounced, false); }, () => setMode('list'))}
         </div>
       ) : (
         <div className="space-y-3">
@@ -119,7 +139,7 @@ export default function PickerModal<T>({
           ) : (
             <div className={layout === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[55vh] overflow-y-auto' : 'space-y-1.5 max-h-[55vh] overflow-y-auto'}>
               {items.map((it) => (
-                <div key={keyOf(it)}>{renderItem(it, () => onPick(it))}</div>
+                <div key={keyOf(it)}>{renderItem(it, () => onPick(it), { edit: () => { setEditItem(it); setMode('edit'); }, del: () => del(it) })}</div>
               ))}
             </div>
           )}

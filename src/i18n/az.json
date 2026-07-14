@@ -49,6 +49,7 @@
     "products": "Məhsullar",
     "semifinished": "Yarımfabrikat",
     "categories": "Kateqoriyalar",
+    "finCategories": "Maliyyə kateqoriyaları",
     "measures": "Ölçü vahidləri",
     "warehouses": "Anbarlar",
     "cashdesks": "Kassalar",
@@ -71,7 +72,10 @@
     "tradingFormulas": "Formulalar",
     "vehicles": "Maşın",
     "catalog": "Katalog",
-    "study": "Öyrənmə"
+    "study": "Öyrənmə",
+    "financeJournals": "Maliyyə jurnalı",
+    "financeReports": "Maliyyə hesabatları",
+    "finance": "Maliyyə"
   },
   "auth": {
     "login": "Daxil ol",
@@ -91,7 +95,9 @@
     "forgotPasswordLink": "Şifrəni unutdunuz?",
     "loginSuccess": "Uğurla daxil oldunuz",
     "resetEmailSent": "Sıfırlama linki göndərildi",
-    "invalidCredentials": "İstifadəçi adı və ya şifrə yanlışdır"
+    "invalidCredentials": "İstifadəçi adı və ya şifrə yanlışdır",
+    "registrationClosed": "Qeydiyyat aktiv deyil",
+    "registrationClosedHint": "Administrator qeydiyyatı bağlayıb."
   },
   "dashboard": {
     "title": "İdarə paneli",
@@ -175,6 +181,16 @@
     "addChild": "Alt-kateqoriya",
     "rootOption": "Kök (üst yoxdur)"
   },
+  "finCategories": {
+    "title": "Maliyyə kateqoriyaları",
+    "subtitle": "Gəlir və xərc təsnifatı (məhsul kateqoriyasından ayrı)",
+    "income": "Gəlir",
+    "expense": "Xərc",
+    "new": "Yeni kateqoriya",
+    "addChild": "Alt-kateqoriya",
+    "parentCategory": "Üst kateqoriya",
+    "rootOption": "Kök (üst yoxdur)"
+  },
   "measures": {
     "title": "Ölçü vahidləri",
     "newUnit": "Yeni vahid",
@@ -244,7 +260,10 @@
     "notifications": "Bildirişlər",
     "notif1": "Yeni sifariş gəldikdə",
     "notif2": "Sifariş statusu dəyişdikdə",
-    "notif3": "Stok aşağı düşdükdə"
+    "notif3": "Stok aşağı düşdükdə",
+    "system": "Sistem",
+    "registration": "Qeydiyyat (self-register)",
+    "registrationHint": "Açıq olsa istifadəçilər özləri qeydiyyatdan keçə bilər."
   },
   "usersPage": {
     "unit": "istifadəçi",
@@ -754,5 +773,53 @@
     "aiInstruction": "AI təlimatı",
     "aiInstructionPh": "Bütün sahələrə aid ümumi göstəriş — məs. «vurğu düşən hərfi qalın və qırmızı et»",
     "showInList": "Siyahıda göstər"
+  },
+  "finance": {
+    "title": "Maliyyə jurnalı",
+    "subtitle": "Gündəlik jurnal → post → kassa + hesabat",
+    "newJournal": "Yeni jurnal",
+    "journalDate": "Tarix",
+    "note": "Qeyd",
+    "notePlaceholder": "məs. həftəlik xərclər",
+    "empty": "Jurnal yoxdur",
+    "draftLines": "sətir (draft)",
+    "posted": "Post olunub",
+    "deleteJournalWarn": "Bu jurnal (və içindəki draft sətirlər) silinsin?",
+    "back": "Maliyyə jurnalı",
+    "addEntry": "Sətir əlavə et",
+    "post": "Post et",
+    "income": "Gəlir",
+    "expense": "Xərc",
+    "net": "Nəticə",
+    "type": "Növ",
+    "account": "Hesab",
+    "category": "Kateqoriya",
+    "amount": "Məbləğ",
+    "noEntries": "Sətir yoxdur — əlavə edin",
+    "deleteEntryWarn": "Bu sətir silinsin?",
+    "postConfirm": "Jurnal post ediləcək: sətirlər kassaya və hesabata düşəcək, draft silinəcək. Davam?",
+    "create": "Yarat",
+    "newRowHint": "yeni sətir — doldur, avtomatik yaranır",
+    "date": "Tarix",
+    "transfer": "Transfer",
+    "toAccount": "Hədəf hesab",
+    "receipt": "Çek (məhsullar)",
+    "receiptHint": "Bu xərcin məhsul detalı — sətirlərin cəmi məbləği təyin edir.",
+    "item": "Məhsul",
+    "qty": "Say",
+    "price": "Qiymət",
+    "addLine": "Sətir əlavə et",
+    "amountFromReceipt": "Məbləğ çekdən hesablanır",
+    "reports": "Maliyyə hesabatları",
+    "reportsSubtitle": "Kateqoriya, məhsul və kassa üzrə",
+    "byCategory": "Kateqoriya üzrə",
+    "byItem": "Məhsul üzrə",
+    "cashFlow": "Kassa",
+    "cashIn": "Giriş",
+    "cashOut": "Çıxış",
+    "noCategory": "(kateqoriyasız)",
+    "noData": "Məlumat yoxdur",
+    "newItem": "Yeni məhsul",
+    "newItemName": "Məhsulun adı"
   }
 }

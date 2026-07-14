@@ -11,6 +11,7 @@ interface AuthContextValue {
   roles: Role[];
   loading: boolean;
   login: (username: string, password: string) => Promise<void>;
+  register: (name: string, username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   /** Öz profilini yeniləyir (ad/username) və context-i təzələyir. */
   updateProfile: (name: string, username: string) => Promise<void>;
@@ -69,6 +70,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     syncLanguage(session.user.language); // axırıncı seçilmiş dil
   }, [syncLanguage]);
 
+  const register = useCallback(async (name: string, username: string, password: string) => {
+    const session = await authService.register(name, username, password);
+    setUser(session.user);
+    setPermissions(session.permissions);
+    setRoles(session.roles);
+    syncLanguage(session.user.language);
+  }, [syncLanguage]);
+
   const logout = useCallback(async () => {
     await authService.logout();
     setUser(null);
@@ -93,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <AuthContext.Provider value={{ user, permissions, roles, loading, login, logout, updateProfile, can }}>
+    <AuthContext.Provider value={{ user, permissions, roles, loading, login, register, logout, updateProfile, can }}>
       {children}
     </AuthContext.Provider>
   );

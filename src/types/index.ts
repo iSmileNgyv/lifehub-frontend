@@ -515,6 +515,52 @@ export interface ItemCategory {
   in_use: boolean;
 }
 
+/** Maliyyə kateqoriyası (gəlir/xərc ağacı) — item kateqoriyasından ayrı. */
+export type FinanceCategoryType = 'income' | 'expense';
+export interface FinanceCategory {
+  code: string;
+  parent_code: string | null;
+  name: Translatable;
+  type: FinanceCategoryType;
+  sort_order: number;
+  in_use: boolean;
+}
+
+/** Maliyyə jurnalı (gündəlik) → post → finance_ledger + cash_ledger. */
+export type FinanceEntryType = 'income' | 'expense' | 'transfer';
+export interface FinanceJournal {
+  code: string;
+  journal_date: string;
+  descr: string | null;
+  resp_person: string | null;
+  entries_count: number;
+  created_at?: string;
+}
+export interface FinanceLine {
+  uid: string;
+  item_code: string;
+  item_name: Translatable | null;
+  measure_code: string | null;
+  qty: string;
+  unit_price: string;
+  amount_lcy: string;
+}
+export interface FinanceJournalEntry {
+  uid: string;
+  posting_date: string | null;
+  entry_type: FinanceEntryType;
+  cash_desk_code: string;
+  to_cash_desk_code: string | null;
+  category_code: string | null;
+  amount_lcy: string;
+  descr: string | null;
+  lines: FinanceLine[];
+}
+export interface FinanceJournalShow {
+  journal: FinanceJournal;
+  entries: FinanceJournalEntry[];
+}
+
 /** Item üzrə vahid çevirməsi (app.items_measurement): 1 measure_code = meas_weight × base. */
 export interface ItemMeasurement {
   uid: string;

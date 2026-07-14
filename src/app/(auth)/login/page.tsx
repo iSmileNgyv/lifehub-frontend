@@ -1,17 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Building2, User, Lock, Eye, EyeOff } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { authService } from '@/services/authService';
 import { ApiError } from '@/lib/api';
 
 export default function LoginPage() {
   const { t } = useLanguage();
   const router = useRouter();
   const { login } = useAuth();
+  const [registerEnabled, setRegisterEnabled] = useState(false);
+  useEffect(() => { authService.registrationStatus().then((r) => setRegisterEnabled(r.enabled)).catch(() => {}); }, []);
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('password');
   const [showPassword, setShowPassword] = useState(false);
@@ -121,12 +124,14 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
-          {t('auth.noAccount')}{' '}
-          <Link href="/register" className="text-blue-600 dark:text-blue-400 font-medium hover:underline">
-            {t('auth.registerButton')}
-          </Link>
-        </p>
+        {registerEnabled && (
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
+            {t('auth.noAccount')}{' '}
+            <Link href="/register" className="text-blue-600 dark:text-blue-400 font-medium hover:underline">
+              {t('auth.registerButton')}
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   );

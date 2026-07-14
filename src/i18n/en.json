@@ -49,6 +49,7 @@
     "products": "Products",
     "semifinished": "Semi-finished",
     "categories": "Categories",
+    "finCategories": "Finance categories",
     "measures": "Measure Units",
     "warehouses": "Warehouses",
     "cashdesks": "Cash desks",
@@ -71,7 +72,10 @@
     "tradingFormulas": "Formulas",
     "vehicles": "Vehicle",
     "catalog": "Catalog",
-    "study": "Study"
+    "study": "Study",
+    "financeJournals": "Finance journal",
+    "financeReports": "Finance reports",
+    "finance": "Finance"
   },
   "auth": {
     "login": "Login",
@@ -91,7 +95,9 @@
     "forgotPasswordLink": "Forgot your password?",
     "loginSuccess": "Successfully logged in",
     "resetEmailSent": "Reset link has been sent",
-    "invalidCredentials": "Invalid username or password"
+    "invalidCredentials": "Invalid username or password",
+    "registrationClosed": "Registration is not active",
+    "registrationClosedHint": "The administrator has closed registration."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -175,6 +181,16 @@
     "addChild": "Subcategory",
     "rootOption": "Root (no parent)"
   },
+  "finCategories": {
+    "title": "Finance categories",
+    "subtitle": "Income and expense classification (separate from item categories)",
+    "income": "Income",
+    "expense": "Expense",
+    "new": "New category",
+    "addChild": "Subcategory",
+    "parentCategory": "Parent category",
+    "rootOption": "Root (no parent)"
+  },
   "measures": {
     "title": "Measure Units",
     "newUnit": "New Unit",
@@ -244,7 +260,10 @@
     "notifications": "Notifications",
     "notif1": "When a new order arrives",
     "notif2": "When order status changes",
-    "notif3": "When stock runs low"
+    "notif3": "When stock runs low",
+    "system": "System",
+    "registration": "Registration (self-register)",
+    "registrationHint": "When on, users can register themselves."
   },
   "usersPage": {
     "unit": "users",
@@ -754,5 +773,53 @@
     "aiInstruction": "AI instruction",
     "aiInstructionPh": "General guidance for all fields — e.g. «make the stressed letter bold and red»",
     "showInList": "Show in list"
+  },
+  "finance": {
+    "title": "Finance journal",
+    "subtitle": "Daily journal → post → cash + reporting",
+    "newJournal": "New journal",
+    "journalDate": "Date",
+    "note": "Note",
+    "notePlaceholder": "e.g. weekly expenses",
+    "empty": "No journals",
+    "draftLines": "draft lines",
+    "posted": "Posted",
+    "deleteJournalWarn": "Delete this journal (and its draft lines)?",
+    "back": "Finance journal",
+    "addEntry": "Add entry",
+    "post": "Post",
+    "income": "Income",
+    "expense": "Expense",
+    "net": "Net",
+    "type": "Type",
+    "account": "Account",
+    "category": "Category",
+    "amount": "Amount",
+    "noEntries": "No entries — add one",
+    "deleteEntryWarn": "Delete this entry?",
+    "postConfirm": "The journal will be posted: lines go to cash and reporting, drafts are removed. Continue?",
+    "create": "Create",
+    "newRowHint": "new row — fill in, auto-created",
+    "date": "Date",
+    "transfer": "Transfer",
+    "toAccount": "To account",
+    "receipt": "Receipt (items)",
+    "receiptHint": "Item breakdown of this expense — the sum of lines sets the amount.",
+    "item": "Item",
+    "qty": "Qty",
+    "price": "Price",
+    "addLine": "Add line",
+    "amountFromReceipt": "Amount is calculated from the receipt",
+    "reports": "Finance reports",
+    "reportsSubtitle": "By category, item and cash",
+    "byCategory": "By category",
+    "byItem": "By item",
+    "cashFlow": "Cash",
+    "cashIn": "In",
+    "cashOut": "Out",
+    "noCategory": "(no category)",
+    "noData": "No data",
+    "newItem": "New item",
+    "newItemName": "Item name"
   }
 }

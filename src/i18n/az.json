@@ -20,6 +20,7 @@
     "update": "Yenilə",
     "name": "Ad",
     "code": "Kod",
+    "optional": "istəyə görə",
     "date": "Tarix",
     "note": "Qeyd",
     "total": "Cəmi",
@@ -74,6 +75,7 @@
     "catalog": "Katalog",
     "study": "Öyrənmə",
     "financeJournals": "Maliyyə jurnalı",
+    "financeLedger": "Maliyyə ledger",
     "financeReports": "Maliyyə hesabatları",
     "finance": "Maliyyə"
   },
@@ -168,6 +170,8 @@
     "deleteWarn": "Bu məhsul silinəcək. Davam edilsin?",
     "noImage": "Şəkil yoxdur",
     "units": "Vahid çevirmələri",
+    "priceList": "Qiymət tarixçəsi",
+    "priceEmpty": "Hələ qiymət yoxdur (post olunmuş çek lazımdır)",
     "unitsHint": "1 vahid neçə baza vahidi edir (məs. 1 KİSƏ = 50 KQ)",
     "unit": "Vahid",
     "weight": "Çəki",
@@ -820,6 +824,18 @@
     "noCategory": "(kateqoriyasız)",
     "noData": "Məlumat yoxdur",
     "newItem": "Yeni məhsul",
-    "newItemName": "Məhsulun adı"
+    "newItemName": "Məhsulun adı",
+    "total": "Cəmi",
+    "measure": "Vahid",
+    "scanPlaceholder": "Barkod oxut və ya daxil et…",
+    "barcodeNotFound": "Barkod tapılmadı — yeni məhsul yarat",
+    "ledgerTitle": "Maliyyə ledger",
+    "ledgerSubtitle": "Post olunmuş gəlir/xərc — geri qaytar və ya qeyd/kateqoriya düzəlt",
+    "reverse": "Geri qaytar",
+    "reverseConfirm": "Bu yazı geri qaytarılacaq: kassa hərəkəti geri alınacaq, sətir jurnalda draft kimi bərpa olunacaq. Sonra redaktə edib təzədən post edə bilərsən. Davam?",
+    "noLedger": "Post olunmuş yazı yoxdur",
+    "allTypes": "Bütün növlər",
+    "allAccounts": "Bütün hesablar",
+    "allCategories": "Bütün kateqoriyalar"
   }
 }

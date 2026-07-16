@@ -541,6 +541,7 @@ export interface FinanceLine {
   item_code: string;
   item_name: Translatable | null;
   measure_code: string | null;
+  meas_weight: string | null; // NULL = baza vahidi (×1); əks halda variant çəkisi (5L "ədəd" vs 8L)
   qty: string;
   unit_price: string;
   amount_lcy: string;
@@ -569,6 +570,21 @@ export interface ItemMeasurement {
   measure_code: string;
   meas_weight: string;
   in_use: boolean;
+}
+
+/** Məhsulun bir variantı üçün son qiymət (finance_ledger_line-dən). */
+export interface ItemLastPrice {
+  measure_code: string | null;
+  meas_weight: string | null;
+  unit_price: string;
+  posting_date: string | null;
+}
+
+/** Məhsulun qiymət tarixçəsi — variant üzrə qiymət dəyişmələri (ən yeni yuxarıda). */
+export interface ItemPriceHistory {
+  measure_code: string | null;
+  meas_weight: string | null;
+  changes: { posting_date: string | null; unit_price: string }[];
 }
 
 /** Xammal / məhsul (app.items). status ACTIVE|BLOCKED — CategoryStatus ilə eyni. */

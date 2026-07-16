@@ -8,7 +8,7 @@ export interface SummaryReport {
 }
 export interface ItemsReport {
   from: string; to: string; total: number;
-  rows: { item_code: string; item_name: Translatable | null; measure_code: string | null; qty: number; total: number }[];
+  rows: { item_code: string; item_name: Translatable | null; measure_code: string | null; meas_weight: string | null; qty: number; total: number }[];
 }
 export interface CashReport {
   from: string; to: string; in: number; out: number; net: number;

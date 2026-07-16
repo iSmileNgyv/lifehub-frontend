@@ -1,27 +1,17 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { Pencil, Trash2, Loader2 } from 'lucide-react';
+import { useCallback, useState } from 'react';
+import { Pencil, Trash2 } from 'lucide-react';
 import PickerModal from './PickerModal';
 import PickerField from './PickerField';
-import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
 import { EntityImage } from '@/components/ui/EntityImage';
+import { ItemFormFields } from '@/components/inventory/ItemForm';
 import { itemService } from '@/services/itemService';
-import { measureService } from '@/services/measureService';
-import { itemCategoryService } from '@/services/itemCategoryService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useContentLanguages } from '@/contexts/ContentLanguagesContext';
 import { translateValue } from '@/lib/translate';
-import { ApiError } from '@/lib/api';
-import type { Item, ItemCategory, Measurement, Translatable } from '@/types';
-
-const genCode = (name: string) => {
-  let base = name.trim().toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 20);
-  if (!/^[A-Z]/.test(base)) base = `I${base}`;
-  return `${base || 'ITEM'}_${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
-};
+import type { Item } from '@/types';
 
 export default function ItemPicker({
   value, displayValue, onChange, label, placeholder, disabled,
@@ -57,9 +47,9 @@ export default function ItemPicker({
         canCreate={can('PRODUCT_CREATE')}
         createLabel={t('common.create')}
         createTitle={t('picker.newItem')}
-        renderCreate={(onCreated, onCancel) => <ItemForm onSaved={onCreated} onCancel={onCancel} />}
+        renderCreate={(onCreated, onCancel) => <ItemFormFields onSaved={onCreated} onCancel={onCancel} />}
         editTitle={t('common.edit')}
-        renderEdit={can('PRODUCT_UPDATE') ? (item, onSaved, onCancel) => <ItemForm item={item} onSaved={() => onSaved()} onCancel={onCancel} /> : undefined}
+        renderEdit={can('PRODUCT_UPDATE') ? (item, onSaved, onCancel) => <ItemFormFields item={item} onSaved={() => onSaved()} onCancel={onCancel} /> : undefined}
         onDelete={can('PRODUCT_DELETE') ? (i) => itemService.remove(i.code).then(() => undefined) : undefined}
         onPick={(i) => { setPicked(i); onChange(i.code, i); setOpen(false); }}
         renderItem={(i, pick, actions) => (
@@ -83,69 +73,5 @@ export default function ItemPicker({
         )}
       />
     </>
-  );
-}
-
-/** Məhsul yaratma/redaktə forması (picker daxilində). */
-function ItemForm({ item, onSaved, onCancel }: { item?: Item; onSaved: (i: Item) => void; onCancel: () => void }) {
-  const { t, language } = useLanguage();
-  const { defaultCode } = useContentLanguages();
-  const tr = (v: Translatable | null | undefined, fb: string) => translateValue(v ?? undefined, language, defaultCode) || fb;
-
-  const [name, setName] = useState(item ? tr(item.name, item.code) : '');
-  const [category, setCategory] = useState<string>(item?.category_code ?? '');
-  const [measure, setMeasure] = useState(item?.base_measure_code ?? '');
-  const [measures, setMeasures] = useState<Measurement[]>([]);
-  const [cats, setCats] = useState<ItemCategory[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    measureService.list().then((m) => { setMeasures(m); if (!item && m[0]) setMeasure((cur) => cur || m[0].code); }).catch(() => {});
-    itemCategoryService.list().then(setCats).catch(() => {});
-  }, [item]);
-
-  const sel = 'w-full h-9 px-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-blue-500';
-
-  const submit = async () => {
-    setError('');
-    if (!name.trim()) { setError(`${t('common.name')} *`); return; }
-    if (!measure) { setError(`${t('products.baseMeasure')} *`); return; }
-    setLoading(true);
-    try {
-      const payload = { name: { [defaultCode]: name.trim() }, category_code: category || null, base_measure_code: measure, status: (item?.status ?? 'ACTIVE') as Item['status'] };
-      const saved = item
-        ? await itemService.update(item.code, payload)
-        : await itemService.create({ code: genCode(name), ...payload });
-      onSaved(saved);
-    } catch (e) { setError(e instanceof ApiError ? e.message : t('common.error')); }
-    finally { setLoading(false); }
-  };
-
-  return (
-    <div className="space-y-3">
-      {error && <div className="px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-sm text-red-600">{error}</div>}
-      <Input label={t('common.name')} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('finance.newItemName')} />
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('products.category')}</label>
-          <select value={category} onChange={(e) => setCategory(e.target.value)} className={sel}>
-            <option value="">—</option>
-            {cats.map((c) => <option key={c.code} value={c.code}>{tr(c.name, c.code)}</option>)}
-          </select>
-        </div>
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('products.baseMeasure')} *</label>
-          <select value={measure} onChange={(e) => setMeasure(e.target.value)} className={sel}>
-            <option value="">—</option>
-            {measures.map((m) => <option key={m.code} value={m.code}>{tr(m.name, m.code)}</option>)}
-          </select>
-        </div>
-      </div>
-      <div className="flex justify-end gap-2 pt-1">
-        <Button variant="outline" onClick={onCancel} disabled={loading}>{t('common.cancel')}</Button>
-        <Button onClick={submit} loading={loading}>{t('common.save')}</Button>
-      </div>
-    </div>
   );
 }

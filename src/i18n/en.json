@@ -20,6 +20,7 @@
     "update": "Update",
     "name": "Name",
     "code": "Code",
+    "optional": "optional",
     "date": "Date",
     "note": "Note",
     "total": "Total",
@@ -74,6 +75,7 @@
     "catalog": "Catalog",
     "study": "Study",
     "financeJournals": "Finance journal",
+    "financeLedger": "Finance ledger",
     "financeReports": "Finance reports",
     "finance": "Finance"
   },
@@ -168,6 +170,8 @@
     "deleteWarn": "This product will be deleted. Continue?",
     "noImage": "No image",
     "units": "Unit conversions",
+    "priceList": "Price history",
+    "priceEmpty": "No prices yet (needs a posted receipt)",
     "unitsHint": "How many base units in 1 unit (e.g. 1 SACK = 50 KG)",
     "unit": "Unit",
     "weight": "Weight",
@@ -820,6 +824,18 @@
     "noCategory": "(no category)",
     "noData": "No data",
     "newItem": "New item",
-    "newItemName": "Item name"
+    "newItemName": "Item name",
+    "total": "Total",
+    "measure": "Unit",
+    "scanPlaceholder": "Scan or type barcode…",
+    "barcodeNotFound": "Barcode not found — create new item",
+    "ledgerTitle": "Finance ledger",
+    "ledgerSubtitle": "Posted income/expense — reverse or edit note/category",
+    "reverse": "Reverse",
+    "reverseConfirm": "This entry will be reversed: the cash movement is undone and the line is restored as a draft in its journal. Then you can edit and re-post. Continue?",
+    "noLedger": "No posted entries",
+    "allTypes": "All types",
+    "allAccounts": "All accounts",
+    "allCategories": "All categories"
   }
 }

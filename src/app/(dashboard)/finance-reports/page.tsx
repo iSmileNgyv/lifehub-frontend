@@ -119,9 +119,9 @@ export default function FinanceReportsPage() {
                 </tr></thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                   {items.rows.map((r) => (
-                    <tr key={r.item_code} className="hover:bg-gray-50/60 dark:hover:bg-gray-800/30">
+                    <tr key={`${r.item_code}|${r.measure_code ?? ''}|${r.meas_weight ?? ''}`} className="hover:bg-gray-50/60 dark:hover:bg-gray-800/30">
                       <td className="px-4 py-2">{tr(r.item_name, r.item_code)}</td>
-                      <td className="px-4 py-2 text-right tabular-nums text-gray-500">{Number(r.qty).toLocaleString(undefined, { maximumFractionDigits: 4 })} {r.measure_code}</td>
+                      <td className="px-4 py-2 text-right tabular-nums text-gray-500">{Number(r.qty).toLocaleString(undefined, { maximumFractionDigits: 4 })} {r.measure_code}{r.meas_weight ? ` ×${Number(r.meas_weight)}` : ''}</td>
                       <td className="px-4 py-2 text-right tabular-nums font-semibold">{money(r.total)}</td>
                     </tr>
                   ))}

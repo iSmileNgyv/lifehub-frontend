@@ -112,7 +112,12 @@
     "journalsPosted": "{n} posted journals",
     "usdBalance": "USD balance (on hand)",
     "balanceCost": "Cost value",
-    "avgCost": "Avg cost"
+    "avgCost": "Avg cost",
+    "financeOverview": "Finance overview",
+    "monthlyTrend": "Monthly income/expense",
+    "expenseByCategory": "Expense by category",
+    "cashBalances": "Cash balances",
+    "cashBalance": "Cash balance"
   },
   "purchases": {
     "title": "Purchase Requests",

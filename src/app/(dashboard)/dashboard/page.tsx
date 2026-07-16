@@ -7,6 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { tradingJournalService } from '@/services/tradingJournalService';
 import PageHeader from '@/components/ui/PageHeader';
+import FinanceDashboard from '@/components/finance/FinanceDashboard';
 
 interface Stats { month: string; revenue: number; buy: number; cogs: number; profit: number; journals: number }
 
@@ -14,6 +15,7 @@ export default function DashboardPage() {
   const { t } = useLanguage();
   const { can } = useAuth();
   const canTrading = can('TRADING_VIEW');
+  const canFinance = can('FINANCE_VIEW');
 
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [stats, setStats] = useState<Stats | null>(null);
@@ -32,6 +34,13 @@ export default function DashboardPage() {
   return (
     <div>
       <PageHeader title={t('nav.dashboard')} />
+
+      {canFinance && (
+        <section className="mb-6">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{t('dashboard.financeOverview')}</h2>
+          <FinanceDashboard />
+        </section>
+      )}
 
       {canTrading && (
         <section className="mb-6">
@@ -69,7 +78,7 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {!canTrading && (
+      {!canTrading && !canFinance && (
         <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 text-center">
           <p className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.empty')}</p>
         </div>

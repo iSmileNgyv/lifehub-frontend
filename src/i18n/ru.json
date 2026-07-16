@@ -112,7 +112,12 @@
     "journalsPosted": "{n} проведённых журналов",
     "usdBalance": "Баланс USD (остаток)",
     "balanceCost": "Стоимость",
-    "avgCost": "Ср. закупка"
+    "avgCost": "Ср. закупка",
+    "financeOverview": "Финансовый обзор",
+    "monthlyTrend": "Доходы/расходы по месяцам",
+    "expenseByCategory": "Расходы по категориям",
+    "cashBalances": "Остатки касс",
+    "cashBalance": "Остаток кассы"
   },
   "purchases": {
     "title": "Заявки на закупку",

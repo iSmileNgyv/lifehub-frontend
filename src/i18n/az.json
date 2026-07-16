@@ -112,7 +112,12 @@
     "journalsPosted": "{n} post olunmuş jurnal",
     "usdBalance": "USD balansı (qalıq)",
     "balanceCost": "Maya dəyəri",
-    "avgCost": "Orta alış"
+    "avgCost": "Orta alış",
+    "financeOverview": "Maliyyə icmalı",
+    "monthlyTrend": "Aylıq gəlir/xərc",
+    "expenseByCategory": "Xərc — kateqoriya üzrə",
+    "cashBalances": "Kassa balansları",
+    "cashBalance": "Kassa qalığı"
   },
   "purchases": {
     "title": "Satınalma sorğuları",

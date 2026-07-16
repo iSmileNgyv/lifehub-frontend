@@ -25,6 +25,7 @@ import {
   ChevronRight,
   ChevronDown,
   Building2,
+  Send,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -45,6 +46,7 @@ const navItems: NavItem[] = [
   },
   { key: 'vehicles', href: '/vehicles', icon: Car, op: 'VEHICLE_VIEW' },
   { key: 'study', href: '/study', icon: GraduationCap, op: 'STUDY_VIEW' },
+  { key: 'telegram', href: '/telegram', icon: Send, op: 'STUDY_VIEW' },
   {
     key: 'catalog', icon: Package, children: [
       { key: 'productsList', href: '/products', op: 'PRODUCT_VIEW' },

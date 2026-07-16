@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Plus, Trash2, Barcode } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useContentLanguages } from '@/contexts/ContentLanguagesContext';
-import { financeJournalService } from '@/services/financeJournalService';
 import { itemService } from '@/services/itemService';
 import { itemMeasurementService } from '@/services/itemMeasurementService';
 import { measureService } from '@/services/measureService';
@@ -15,7 +14,10 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import ItemPicker from '@/components/pickers/ItemPicker';
 import { ItemFormModal } from '@/components/inventory/ItemForm';
-import type { FinanceJournalEntry, FinanceJournalShow, Item, ItemLastPrice, ItemMeasurement, Measurement } from '@/types';
+import type { FinanceLine, Item, ItemLastPrice, ItemMeasurement, Measurement } from '@/types';
+
+/** saveLines üçün sətir payload-u (çek redaktoru həm jurnalda, həm ledger-də işlədilir). */
+export interface ReceiptLinePayload { item_code: string; measure_code: string | null; meas_weight: number | null; qty: number; unit_price: number }
 
 interface Row {
   item_code: string;
@@ -35,20 +37,20 @@ const emptyRow = (): Row => ({ item_code: '', item_name: '', base_measure_code: 
 const normW = (w: string | null) => (w == null || w === '' ? '' : String(Number(w)));
 const measKey = (mc: string, mw: string | null) => `${mc}|${normW(mw)}`;
 
-/** Bir maliyyə sətrinin məhsul detalı (çek) — barkod skaner + vahid seçimi; cəm = entry məbləği. */
-export default function ReceiptModal({ code, entry, onClose, onSaved }: {
-  code: string;
-  entry: FinanceJournalEntry;
+/** Bir maliyyə sətrinin məhsul detalı (çek) — barkod skaner + vahid seçimi. Jurnal draft-ında və ledger-də (post olunmuş) işlədilir. */
+export default function ReceiptModal({ initialLines, onClose, onSubmit, onDone }: {
+  initialLines: FinanceLine[];
   onClose: () => void;
-  onSaved: (d: FinanceJournalShow) => void;
+  onSubmit: (lines: ReceiptLinePayload[]) => Promise<void>;
+  onDone: () => void;
 }) {
   const { t, language } = useLanguage();
   const { defaultCode } = useContentLanguages();
   const nameOf = (item: Item) => translateValue(item.name, language, defaultCode) || item.code;
 
   const [rows, setRows] = useState<Row[]>(() =>
-    entry.lines.length
-      ? entry.lines.map((l) => ({
+    initialLines.length
+      ? initialLines.map((l) => ({
         item_code: l.item_code,
         item_name: translateValue(l.item_name ?? undefined, language, defaultCode) || l.item_code,
         // Variant sətrində measure_code vahiddir (baza deyil) → baza units yüklənəndə düzəlir
@@ -73,7 +75,7 @@ export default function ReceiptModal({ code, entry, onClose, onSaved }: {
   // Vahid adları + mövcud sətirlərin vahid siyahısını (items_measurement) çək
   useEffect(() => {
     measureService.list().then(setAllMeasures).catch(() => {});
-    entry.lines.forEach((l, i) => {
+    initialLines.forEach((l, i) => {
       Promise.all([
         itemMeasurementService.list(l.item_code).catch(() => [] as ItemMeasurement[]),
         itemService.lastPrices(l.item_code).catch(() => [] as ItemLastPrice[]),
@@ -171,9 +173,8 @@ export default function ReceiptModal({ code, entry, onClose, onSaved }: {
     const valid = rows.filter((r) => r.item_code && Number(r.qty) > 0);
     setSaving(true); setError('');
     try {
-      const d = await financeJournalService.saveLines(code, entry.uid,
-        valid.map((r) => ({ item_code: r.item_code, measure_code: r.measure_code || null, meas_weight: r.meas_weight ? Number(r.meas_weight) : null, qty: Number(r.qty), unit_price: Number(r.price) || 0 })));
-      onSaved(d);
+      await onSubmit(valid.map((r) => ({ item_code: r.item_code, measure_code: r.measure_code || null, meas_weight: r.meas_weight ? Number(r.meas_weight) : null, qty: Number(r.qty), unit_price: Number(r.price) || 0 })));
+      onDone();
     } catch (e) { setError(e instanceof ApiError ? e.message : t('common.error')); setSaving(false); }
   };
 

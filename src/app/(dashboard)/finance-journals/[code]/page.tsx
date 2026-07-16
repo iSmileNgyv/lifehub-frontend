@@ -17,6 +17,8 @@ import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import ReceiptModal from '@/components/finance/ReceiptModal';
+import FinanceCategoryPicker from '@/components/pickers/FinanceCategoryPicker';
+import CashDeskPicker from '@/components/pickers/CashDeskPicker';
 import type { CashDesk, FinanceCategory, FinanceJournalEntry, FinanceJournalShow, Translatable } from '@/types';
 
 export default function FinanceJournalDetailPage() {
@@ -134,7 +136,7 @@ export default function FinanceJournalDetailPage() {
                           />
                         ))}
                         {can('FINANCE_CREATE') && desks.length > 0 && (
-                          <NewEntryRow code={code} journalDate={data.journal.journal_date} desks={desks} cats={cats} tr={tr} onSaved={setData} onError={setError} />
+                          <NewEntryRow code={code} journalDate={data.journal.journal_date} desks={desks} cats={cats} tr={tr} lastEntry={entries[entries.length - 1]} onSaved={setData} onError={setError} />
                         )}
                       </tbody>
                     </table>
@@ -154,7 +156,14 @@ export default function FinanceJournalDetailPage() {
           onSaved={(d) => { setData(d); setForm(null); }}
         />
       )}
-      {receipt && <ReceiptModal code={code} entry={receipt} onClose={() => setReceipt(null)} onSaved={(d) => { setData(d); setReceipt(null); }} />}
+      {receipt && (
+        <ReceiptModal
+          initialLines={receipt.lines}
+          onClose={() => setReceipt(null)}
+          onSubmit={async (lines) => { setData(await financeJournalService.saveLines(code, receipt.uid, lines)); }}
+          onDone={() => setReceipt(null)}
+        />
+      )}
       <ConfirmDialog open={!!del} message={t('finance.deleteEntryWarn')} onConfirm={doDelete} onCancel={() => setDel(null)} />
       <ConfirmDialog open={confirmPost} message={t('finance.postConfirm')} onConfirm={doPost} onCancel={() => setConfirmPost(false)} />
     </div>
@@ -185,7 +194,6 @@ function EntryRow({ entry, code, desks, cats, tr, canUpdate, canDelete, onSaved,
   useEffect(() => { setAmount(String(entry.amount_lcy)); setDescr(entry.descr ?? ''); }, [entry.amount_lcy, entry.descr]);
 
   const type = entry.entry_type;
-  const typeCats = cats.filter((c) => c.type === type);
   const cellSel = 'w-full h-8 px-2 rounded-md border border-transparent hover:border-gray-300 dark:hover:border-gray-700 bg-transparent text-sm outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-gray-900';
   const amtColor = type === 'income' ? 'text-emerald-600' : type === 'expense' ? 'text-red-500' : 'text-blue-500';
 
@@ -221,22 +229,14 @@ function EntryRow({ entry, code, desks, cats, tr, canUpdate, canDelete, onSaved,
           <option value="transfer">{t('finance.transfer')}</option>
         </select>
       </td>
-      <td className="px-2 py-1">
-        <select disabled={!canUpdate} value={entry.cash_desk_code} onChange={(e) => save({ cash_desk_code: e.target.value })} className={cellSel}>
-          {desks.map((d) => <option key={d.code} value={d.code}>{tr(d.description, d.code)}</option>)}
-        </select>
+      <td className="px-2 py-1 min-w-[9rem]">
+        <CashDeskPicker value={entry.cash_desk_code} displayValue={tr(desks.find((d) => d.code === entry.cash_desk_code)?.description, entry.cash_desk_code)} onChange={(c) => save({ cash_desk_code: c })} disabled={!canUpdate} />
       </td>
-      <td className="px-2 py-1">
+      <td className="px-2 py-1 min-w-[9rem]">
         {type === 'transfer' ? (
-          <select disabled={!canUpdate} value={entry.to_cash_desk_code ?? ''} onChange={(e) => save({ to_cash_desk_code: e.target.value || null })} className={cn(cellSel, 'text-blue-600')}>
-            <option value="">→ {t('finance.toAccount')}</option>
-            {desks.filter((d) => d.code !== entry.cash_desk_code).map((d) => <option key={d.code} value={d.code}>{tr(d.description, d.code)}</option>)}
-          </select>
+          <CashDeskPicker value={entry.to_cash_desk_code ?? ''} displayValue={entry.to_cash_desk_code ? tr(desks.find((d) => d.code === entry.to_cash_desk_code)?.description, entry.to_cash_desk_code) : ''} onChange={(c) => save({ to_cash_desk_code: c || null })} exclude={entry.cash_desk_code} disabled={!canUpdate} placeholder={`→ ${t('finance.toAccount')}`} />
         ) : (
-          <select disabled={!canUpdate} value={entry.category_code ?? ''} onChange={(e) => save({ category_code: e.target.value || null })} className={cellSel}>
-            <option value="">—</option>
-            {typeCats.map((c) => <option key={c.code} value={c.code}>{tr(c.name, c.code)}</option>)}
-          </select>
+          <FinanceCategoryPicker value={entry.category_code ?? ''} type={type as 'income' | 'expense'} displayValue={entry.category_code ? tr(cats.find((c) => c.code === entry.category_code)?.name, entry.category_code) : ''} onChange={(c) => save({ category_code: c || null })} disabled={!canUpdate} />
         )}
       </td>
       <td className="px-2 py-1">
@@ -267,19 +267,20 @@ function EntryRow({ entry, code, desks, cats, tr, canUpdate, canDelete, onSaved,
 }
 
 /** Cədvəlin sonundakı həmişə boş sətir — doldurulanda avtomatik insert (Excel kimi). */
-function NewEntryRow({ code, journalDate, desks, cats, tr, onSaved, onError }: {
+function NewEntryRow({ code, journalDate, desks, cats, tr, lastEntry, onSaved, onError }: {
   code: string;
   journalDate: string;
   desks: CashDesk[];
   cats: FinanceCategory[];
   tr: (v: Translatable | null | undefined, fb: string) => string;
+  lastEntry?: FinanceJournalEntry;
   onSaved: (d: FinanceJournalShow) => void;
   onError: (m: string) => void;
 }) {
   const { t } = useLanguage();
-  const [date, setDate] = useState(journalDate);
+  const [date, setDate] = useState(lastEntry?.posting_date ?? journalDate);
   const [type, setType] = useState<'income' | 'expense' | 'transfer'>('expense');
-  const [desk, setDesk] = useState(desks[0]?.code ?? '');
+  const [desk, setDesk] = useState(lastEntry?.cash_desk_code ?? desks[0]?.code ?? '');
   const [toDesk, setToDesk] = useState('');
   const [category, setCategory] = useState('');
   const [amount, setAmount] = useState('');
@@ -287,8 +288,11 @@ function NewEntryRow({ code, journalDate, desks, cats, tr, onSaved, onError }: {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { if (!desk && desks[0]) setDesk(desks[0].code); }, [desks, desk]);
+  // Yeni sətir üstdəki (sonuncu) sətrin tarixi + hesabını götürsün (hər dəfə dəyişməyəsən)
+  useEffect(() => {
+    if (lastEntry) { setDate(lastEntry.posting_date ?? journalDate); setDesk(lastEntry.cash_desk_code); }
+  }, [lastEntry?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const typeCats = cats.filter((c) => c.type === type);
   const cellSel = 'w-full h-8 px-2 rounded-md border border-transparent hover:border-gray-300 dark:hover:border-gray-700 bg-transparent text-sm outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-gray-900';
   const amtColor = type === 'income' ? 'text-emerald-600' : type === 'expense' ? 'text-red-500' : 'text-blue-500';
 
@@ -331,22 +335,14 @@ function NewEntryRow({ code, journalDate, desks, cats, tr, onSaved, onError }: {
           <option value="transfer">{t('finance.transfer')}</option>
         </select>
       </td>
-      <td className="px-2 py-1">
-        <select value={desk} onChange={(e) => setDesk(e.target.value)} className={cellSel}>
-          {desks.map((d) => <option key={d.code} value={d.code}>{tr(d.description, d.code)}</option>)}
-        </select>
+      <td className="px-2 py-1 min-w-[9rem]">
+        <CashDeskPicker value={desk} displayValue={tr(desks.find((d) => d.code === desk)?.description, desk)} onChange={(c) => setDesk(c)} />
       </td>
-      <td className="px-2 py-1">
+      <td className="px-2 py-1 min-w-[9rem]">
         {type === 'transfer' ? (
-          <select value={toDesk} onChange={(e) => { setToDesk(e.target.value); tryInsert({ to_cash_desk_code: e.target.value || null }); }} className={cn(cellSel, 'text-blue-600')}>
-            <option value="">→ {t('finance.toAccount')}</option>
-            {desks.filter((d) => d.code !== desk).map((d) => <option key={d.code} value={d.code}>{tr(d.description, d.code)}</option>)}
-          </select>
+          <CashDeskPicker value={toDesk} displayValue={toDesk ? tr(desks.find((d) => d.code === toDesk)?.description, toDesk) : ''} exclude={desk} placeholder={`→ ${t('finance.toAccount')}`} onChange={(c) => { setToDesk(c); tryInsert({ to_cash_desk_code: c || null }); }} />
         ) : (
-          <select value={category} onChange={(e) => { setCategory(e.target.value); tryInsert({ category_code: e.target.value || null }); }} className={cellSel}>
-            <option value="">—</option>
-            {typeCats.map((c) => <option key={c.code} value={c.code}>{tr(c.name, c.code)}</option>)}
-          </select>
+          <FinanceCategoryPicker value={category} type={type as 'income' | 'expense'} displayValue={category ? tr(cats.find((c) => c.code === category)?.name, category) : ''} onChange={(c) => { setCategory(c); tryInsert({ category_code: c || null }); }} />
         )}
       </td>
       <td className="px-2 py-1">
@@ -381,8 +377,6 @@ function EntryForm({ code, entry, desks, cats, tr, onClose, onSaved }: {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const sel = 'w-full h-9 px-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-blue-500';
-  const typeCats = cats.filter((c) => c.type === type);
 
   const submit = async () => {
     setError(''); setLoading(true);
@@ -410,19 +404,8 @@ function EntryForm({ code, entry, desks, cats, tr, onClose, onSaved }: {
             </button>
           ))}
         </div>
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('finance.account')}</label>
-          <select value={desk} onChange={(e) => setDesk(e.target.value)} className={sel}>
-            {desks.map((d) => <option key={d.code} value={d.code}>{tr(d.description, d.code)}</option>)}
-          </select>
-        </div>
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('finance.category')}</label>
-          <select value={category} onChange={(e) => setCategory(e.target.value)} className={sel}>
-            <option value="">—</option>
-            {typeCats.map((c) => <option key={c.code} value={c.code}>{tr(c.name, c.code)}</option>)}
-          </select>
-        </div>
+        <CashDeskPicker label={t('finance.account')} value={desk} displayValue={desk ? tr(desks.find((d) => d.code === desk)?.description, desk) : ''} onChange={(c) => setDesk(c)} />
+        <FinanceCategoryPicker label={t('finance.category')} value={category} type={type} displayValue={category ? tr(cats.find((c) => c.code === category)?.name, category) : ''} onChange={(c) => setCategory(c)} />
         <Input type="number" label={t('finance.amount')} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
         <Input label={t('finance.note')} value={descr} onChange={(e) => setDescr(e.target.value)} />
       </div>

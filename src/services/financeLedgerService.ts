@@ -25,6 +25,8 @@ export const financeLedgerService = {
   },
   update: (uid: string, data: { category_code: string | null; descr: string | null }) =>
     api<LedgerEntry>(`/finance-ledger/${uid}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  saveLines: (uid: string, lines: { item_code: string; measure_code?: string | null; meas_weight?: number | null; qty: number; unit_price: number }[]) =>
+    api<LedgerEntry>(`/finance-ledger/${uid}/lines`, { method: 'PATCH', body: JSON.stringify({ lines }) }),
   reverse: (uid: string) =>
     api<{ ok: boolean; message: string; jnl_code: string; entry_uid: string }>(`/finance-ledger/${uid}/reverse`, { method: 'POST' }),
 };

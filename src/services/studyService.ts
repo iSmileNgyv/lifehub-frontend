@@ -34,6 +34,7 @@ interface TemplatePayload {
   description?: string | null;
   ai_instruction?: string | null;
   fields: TemplateField[];
+  display?: import('@/types').TemplateDisplay | null;
 }
 
 export const templateService = {
@@ -41,6 +42,7 @@ export const templateService = {
   create: (data: TemplatePayload) => api<CardTemplate>('/study/templates', { method: 'POST', body: JSON.stringify(data) }),
   update: (uid: string, data: TemplatePayload) => api<CardTemplate>(`/study/templates/${uid}`, { method: 'PATCH', body: JSON.stringify(data) }),
   remove: (uid: string) => api<{ message: string }>(`/study/templates/${uid}`, { method: 'DELETE' }),
+  sample: (uid: string) => api<{ fields: Record<string, string> | null; front: string | null; back: string | null }>(`/study/templates/${uid}/sample`),
 };
 
 export interface AiBulkResult {
@@ -56,8 +58,24 @@ export const aiService = {
     api<{ results: AiBulkResult[] }>(`/study/templates/${template}/generate-bulk`, { method: 'POST', body: JSON.stringify(only && only.length ? { words, only } : { words }) }),
 };
 
+export interface StudySettings {
+  mode: 'learning' | 'flashcard';
+  study_deck_uid: string | null;
+  active_from: string;
+  active_to: string;
+  study_enabled: boolean;
+  interval_min: number;
+  cards_per_push: number;
+  ext_enabled: boolean;
+  ext_rotate_sec: number;
+  ext_notify: boolean;
+  ext_notify_min: number;
+}
+
 export const studyService = {
   queue: (deck: string) => api<{ data: StudyCard[] }>(`/study/decks/${deck}/queue`),
   answer: (deck: string, card: string, rating: Rating) =>
     api<{ due: string; interval: number }>(`/study/decks/${deck}/cards/${card}/answer`, { method: 'POST', body: JSON.stringify({ rating }) }),
+  settings: () => api<StudySettings>('/study/settings'),
+  saveSettings: (data: StudySettings) => api<StudySettings>('/study/settings', { method: 'PUT', body: JSON.stringify(data) }),
 };

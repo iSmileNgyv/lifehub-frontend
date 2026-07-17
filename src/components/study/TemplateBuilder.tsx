@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDraggable, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
-import { X, Plus, Trash2, GripVertical, Pencil, ArrowLeftRight, Type, AlignLeft, Bold, Sparkles, Image as ImageIcon, Copy, Upload, FileText, Heading } from 'lucide-react';
+import { X, Plus, Trash2, GripVertical, Pencil, ArrowLeftRight, Type, AlignLeft, Bold, Sparkles, Image as ImageIcon, Copy, Upload, FileText, Heading, Smartphone } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { templateService } from '@/services/studyService';
 import { parseImport } from '@/lib/templateIO';
@@ -10,7 +10,8 @@ import { ApiError } from '@/lib/api';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import type { CardTemplate, TemplateField, FieldType, FieldSide, HeadingLevel, FieldAlign } from '@/types';
+import type { CardTemplate, TemplateField, TemplateDisplay, FieldType, FieldSide, HeadingLevel, FieldAlign } from '@/types';
+import TemplateDisplayModal from './TemplateDisplayModal';
 
 const COLS = 12;
 const ROW_H = 52; // px
@@ -41,6 +42,8 @@ export default function TemplateBuilder({ template, onClose, onSaved }: { templa
   const [description, setDescription] = useState(template?.description ?? '');
   const [aiInstruction, setAiInstruction] = useState(template?.ai_instruction ?? '');
   const [fields, setFields] = useState<TemplateField[]>(() => normalize(template?.fields ?? []));
+  const [display, setDisplay] = useState<TemplateDisplay | null>(template?.display ?? null);
+  const [displayOpen, setDisplayOpen] = useState(false);
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [editing, setEditing] = useState<TemplateField | null>(null);
   const [saving, setSaving] = useState(false);
@@ -142,7 +145,7 @@ export default function TemplateBuilder({ template, onClose, onSaved }: { templa
     const flat = mapped.map((f) => { let k = f.key; let i = 2; while (used.has(k)) k = `${f.key}_${i++}`; used.add(k); return { ...f, key: k }; });
     setSaving(true); setError('');
     try {
-      const data = { name: name.trim(), description: description || null, ai_instruction: aiInstruction || null, fields: flat };
+      const data = { name: name.trim(), description: description || null, ai_instruction: aiInstruction || null, fields: flat, display };
       if (template) await templateService.update(template.uid, data); else await templateService.create(data);
       onSaved();
     } catch (e) { setError(e instanceof ApiError ? e.message : t('common.error')); }
@@ -158,6 +161,7 @@ export default function TemplateBuilder({ template, onClose, onSaved }: { templa
         <div className="ml-auto flex items-center gap-2">
           {error && <span className="text-xs text-red-500">{error}</span>}
           <Button variant="outline" onClick={() => { setImportText(''); setImportErr(''); setImportOpen(true); }}><Upload className="w-4 h-4 mr-1" /> {t('study.importTemplate')}</Button>
+          <Button variant="outline" onClick={() => setDisplayOpen(true)}><Smartphone className="w-4 h-4 mr-1" /> {t('study.displayBtn')}</Button>
           <Button onClick={submit} loading={saving}>{t('common.save')}</Button>
         </div>
       </div>
@@ -181,6 +185,16 @@ export default function TemplateBuilder({ template, onClose, onSaved }: { templa
       </DndContext>
 
       {editing && <FieldEditModal field={editing} onClose={() => setEditing(null)} onSave={(next) => saveEdit(editing.key, next)} onDuplicate={duplicateField} />}
+
+      {displayOpen && (
+        <TemplateDisplayModal
+          fields={fields}
+          value={display}
+          templateUid={template?.uid ?? null}
+          onClose={() => setDisplayOpen(false)}
+          onSave={(d) => { setDisplay(d); setDisplayOpen(false); }}
+        />
+      )}
 
       {importOpen && (
         <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/50 p-4" onClick={() => setImportOpen(false)}>

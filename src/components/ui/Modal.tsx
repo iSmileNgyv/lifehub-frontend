@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -24,35 +24,65 @@ const sizeClasses = {
 };
 
 export default function Modal({ open, onClose, title, children, size = 'md', footer, closeOnBackdrop = false }: ModalProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  // Windows kimi: başlıqdan sürüklə (pos), küncdən ölçü dəyiş (dim). Açılanda sıfırlanır.
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const [dim, setDim] = useState<{ w: number; h: number } | null>(null);
+
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    document.body.style.overflow = open ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [open]);
+  useEffect(() => { if (open) { setPos(null); setDim(null); } }, [open]);
 
   if (!open) return null;
+
+  const startDrag = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return; // düymələr sürükləmə deyil
+    e.preventDefault();
+    const sx = e.clientX, sy = e.clientY;
+    const base = pos ?? { x: 0, y: 0 };
+    const move = (ev: MouseEvent) => setPos({ x: base.x + (ev.clientX - sx), y: base.y + (ev.clientY - sy) });
+    const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  };
+
+  const startResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = panelRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const sx = e.clientX, sy = e.clientY, sw = rect.width, sh = rect.height;
+    const move = (ev: MouseEvent) => setDim({ w: Math.max(300, sw + (ev.clientX - sx)), h: Math.max(180, sh + (ev.clientY - sy)) });
+    const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={closeOnBackdrop ? onClose : undefined}
-      />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeOnBackdrop ? onClose : undefined} />
 
       {/* Modal */}
       <div
+        ref={panelRef}
         className={cn(
-          'relative w-full bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 flex flex-col max-h-[90vh]',
-          sizeClasses[size]
+          'relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 flex flex-col',
+          dim ? 'w-full' : cn('w-full max-h-[90vh]', sizeClasses[size]),
         )}
+        style={{
+          transform: pos ? `translate(${pos.x}px, ${pos.y}px)` : undefined,
+          width: dim ? dim.w : undefined,
+          height: dim ? dim.h : undefined,
+          maxWidth: '95vw',
+          maxHeight: '92vh',
+        }}
       >
-        {/* Header */}
+        {/* Header — sürüklə */}
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
+          <div onMouseDown={startDrag} className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800 shrink-0 cursor-move select-none">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
             <button
               onClick={onClose}
@@ -72,6 +102,15 @@ export default function Modal({ open, onClose, title, children, size = 'md', foo
             {footer}
           </div>
         )}
+
+        {/* Ölçü dəyişmə tutacağı (aşağı sağ künc) */}
+        <div
+          onMouseDown={startResize}
+          title="Ölçünü dəyiş"
+          className="absolute bottom-0.5 right-0.5 w-4 h-4 flex items-end justify-end cursor-nwse-resize text-gray-300 dark:text-gray-600 hover:text-gray-500"
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden><path d="M11 4 4 11M11 8 8 11" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" /></svg>
+        </div>
       </div>
     </div>
   );

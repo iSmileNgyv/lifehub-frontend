@@ -120,12 +120,17 @@ export interface TemplateField {
   color?: string | null;
   align?: FieldAlign;
 }
+/** Bir kanalın (telegram/extension) görünüşü: front/back = sətirlər, hər sətir bir/bir neçə sahə açarı (yan-yana). */
+export interface ChannelDisplay { front: string[][]; back: string[][] }
+export interface TemplateDisplay { telegram?: ChannelDisplay; extension?: ChannelDisplay }
+
 export interface CardTemplate {
   uid: string;
   name: string;
   description: string | null;
   ai_instruction: string | null;
   fields: TemplateField[];
+  display?: TemplateDisplay | null;
 }
 
 /** Maşın modulu. Bütün məsafə dəyərləri KM (kanonik); unit göstəriş/giriş vahididir. */

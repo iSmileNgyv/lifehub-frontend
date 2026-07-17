@@ -45,7 +45,12 @@ const navItems: NavItem[] = [
     ],
   },
   { key: 'vehicles', href: '/vehicles', icon: Car, op: 'VEHICLE_VIEW' },
-  { key: 'study', href: '/study', icon: GraduationCap, op: 'STUDY_VIEW' },
+  {
+    key: 'study', icon: GraduationCap, children: [
+      { key: 'studyDecks', href: '/study', op: 'STUDY_VIEW' },
+      { key: 'studyParams', href: '/study/settings', op: 'STUDY_VIEW' },
+    ],
+  },
   { key: 'telegram', href: '/telegram', icon: Send, op: 'STUDY_VIEW' },
   {
     key: 'catalog', icon: Package, children: [

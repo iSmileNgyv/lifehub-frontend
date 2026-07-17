@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Search, Plus, Pencil, KeyRound, ShieldCheck, Loader2, UserPlus, X, Check, Lock } from 'lucide-react';
+import { Search, Plus, Pencil, KeyRound, ShieldCheck, Loader2, UserPlus, X, Check, Lock, Send, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -26,7 +26,7 @@ const STATUS_CLS: Record<UserStatus, string> = {
 };
 
 // Cədvəl sütun şablonu (header və sətirlər eyni): ad | username | rollar | status | əməliyyat
-const GRID = 'grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.4fr)_140px_120px] items-center gap-2 px-4';
+const GRID = 'grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.4fr)_140px_150px] items-center gap-2 px-4';
 const ROW_HEIGHT = 56;
 
 export default function UsersPage() {
@@ -34,6 +34,7 @@ export default function UsersPage() {
   const { t } = useLanguage();
   const canUpdate = can('USER_UPDATE');
   const canAssignRoles = can('USER_ROLE_ASSIGN');
+  const canTelegram = can('USER_TELEGRAM');
 
   // Browse (infinite scroll) siyahısı
   const [items, setItems] = useState<ManagedUser[]>([]);
@@ -178,6 +179,7 @@ export default function UsersPage() {
   const [editTarget, setEditTarget] = useState<ManagedUser | null>(null);
   const [pwTarget, setPwTarget] = useState<ManagedUser | null>(null);
   const [rolesTarget, setRolesTarget] = useState<ManagedUser | null>(null);
+  const [tgTarget, setTgTarget] = useState<ManagedUser | null>(null);
 
   if (loading) {
     return (
@@ -313,6 +315,18 @@ export default function UsersPage() {
                     </div>
                     {/* Əməliyyat */}
                     <div className="flex items-center justify-end gap-1">
+                      {canTelegram && (
+                        <button
+                          onClick={() => setTgTarget(u)}
+                          title={u.telegram_linked ? t('usersPage.tgLinked') : t('usersPage.tgNotLinked')}
+                          className={cn(
+                            'w-8 h-8 flex items-center justify-center rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20',
+                            u.telegram_linked ? 'text-emerald-600' : 'text-gray-300 dark:text-gray-600 hover:text-emerald-600',
+                          )}
+                        >
+                          <Send className="w-4 h-4" />
+                        </button>
+                      )}
                       {canAssignRoles && !u.is_super_admin && (
                         <button
                           onClick={() => setRolesTarget(u)}
@@ -365,7 +379,62 @@ export default function UsersPage() {
       {editTarget && <EditModal user={editTarget} onClose={() => setEditTarget(null)} onSaved={applyUpdate} />}
       {pwTarget && <PasswordModal user={pwTarget} onClose={() => setPwTarget(null)} />}
       {rolesTarget && <RolesModal user={rolesTarget} onClose={() => setRolesTarget(null)} onSaved={applyUpdate} />}
+      {tgTarget && <TelegramUserModal user={tgTarget} onClose={() => setTgTarget(null)} onChanged={applyUpdate} />}
     </div>
+  );
+}
+
+/* ── Telegram bağlama (admin istifadəçi üçün kod verir) ── */
+function TelegramUserModal({ user, onClose, onChanged }: { user: ManagedUser; onClose: () => void; onChanged: (u: ManagedUser) => void }) {
+  const { t } = useLanguage();
+  const [code, setCode] = useState<string | null>(null);
+  const [bot, setBot] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const gen = async () => {
+    setBusy(true); setError('');
+    try { const r = await userService.telegramCode(user.uid); setCode(r.code); setBot(r.bot_username); }
+    catch (e) { setError(e instanceof ApiError ? e.message : t('common.error')); }
+    finally { setBusy(false); }
+  };
+
+  const unlink = async () => {
+    setBusy(true); setError('');
+    try { await userService.telegramUnlink(user.uid); onChanged({ ...user, telegram_linked: false }); onClose(); }
+    catch (e) { setError(e instanceof ApiError ? e.message : t('common.error')); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <Modal open onClose={() => !busy && onClose()} title={`${t('usersPage.tgTitle')} — @${user.username}`} size="sm"
+      footer={<Button variant="outline" onClick={onClose} disabled={busy}>{t('common.close')}</Button>}>
+      <div className="space-y-3">
+        {error && <div className="px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-sm text-red-600">{error}</div>}
+
+        <div className="flex items-center gap-2 text-sm">
+          <Send className={cn('w-4 h-4', user.telegram_linked ? 'text-emerald-600' : 'text-gray-400')} />
+          <span className={user.telegram_linked ? 'text-emerald-600' : 'text-gray-500'}>
+            {user.telegram_linked ? t('usersPage.tgLinked') : t('usersPage.tgNotLinked')}
+          </span>
+        </div>
+
+        {code ? (
+          <div className="space-y-2 rounded-lg border border-gray-200 dark:border-gray-800 p-3">
+            <p className="text-sm text-gray-600 dark:text-gray-300">{t('usersPage.tgCodeHint')}</p>
+            <div className="flex items-center gap-3">
+              <code className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-lg font-bold font-mono tracking-widest">{code}</code>
+              <button onClick={() => navigator.clipboard?.writeText(`/start ${code}`)} title={t('telegram.copy')} className="text-gray-400 hover:text-blue-600"><Copy className="w-5 h-5" /></button>
+            </div>
+            <p className="text-xs text-gray-400">{bot ? `@${bot} · ` : ''}<code>/start {code}</code></p>
+          </div>
+        ) : (
+          <Button onClick={gen} loading={busy} leftIcon={<Send className="w-4 h-4" />}>{t('usersPage.tgGenCode')}</Button>
+        )}
+
+        {user.telegram_linked && <Button variant="outline" onClick={unlink} loading={busy}>{t('usersPage.tgUnlink')}</Button>}
+      </div>
+    </Modal>
   );
 }
 

@@ -24,4 +24,10 @@ export const userService = {
 
   syncRoles: (uid: string, roles: string[]) =>
     api<ManagedUser>(`/users/${uid}/roles`, { method: 'PUT', body: JSON.stringify({ roles }) }),
+
+  telegramCode: (uid: string) =>
+    api<{ code: string; bot_username: string | null; expires_min: number }>(`/users/${uid}/telegram-code`, { method: 'POST' }),
+
+  telegramUnlink: (uid: string) =>
+    api<{ ok: boolean }>(`/users/${uid}/telegram-unlink`, { method: 'POST' }),
 };

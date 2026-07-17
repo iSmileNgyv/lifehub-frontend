@@ -51,6 +51,7 @@ export interface ManagedUser {
   is_super_admin: boolean;
   created_at: string | null;
   roles: Role[];
+  telegram_linked?: boolean; // yalnız USER_TELEGRAM icazəsi olanda gəlir
 }
 
 export interface Paginated<T> {

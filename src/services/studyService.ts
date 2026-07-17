@@ -60,6 +60,7 @@ export const aiService = {
 
 export interface StudySettings {
   mode: 'learning' | 'flashcard';
+  ext_mode: 'learning' | 'flashcard';
   study_deck_uid: string | null;
   active_from: string;
   active_to: string;

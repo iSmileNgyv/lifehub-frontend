@@ -39,6 +39,22 @@ export default function StudySettingsPage() {
   const hint = 'text-xs text-gray-400 mt-1';
   const secCls = 'rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 space-y-4';
 
+  // Öyrənmə rejimi seçici — Telegram və Extension üçün ayrıca istifadə olunur
+  const modePicker = (value: 'learning' | 'flashcard', onPick: (m: 'learning' | 'flashcard') => void) => (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('studyParams.mode')}</label>
+      <div className="grid grid-cols-2 gap-2">
+        {(['learning', 'flashcard'] as const).map((m) => (
+          <button key={m} onClick={() => onPick(m)}
+            className={cn('h-16 rounded-xl border text-left px-3 transition', value === m ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30' : 'border-gray-300 dark:border-gray-700')}>
+            <div className="text-sm font-semibold text-gray-800 dark:text-gray-100">{t(`studyParams.mode_${m}`)}</div>
+            <div className="text-[11px] text-gray-400">{t(`studyParams.mode_${m}_hint`)}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   if (loading) return <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>;
   if (!s) return <div className="py-16 text-center text-sm text-gray-400">{error || t('common.error')}</div>;
 
@@ -51,19 +67,6 @@ export default function StudySettingsPage() {
         {/* Ümumi */}
         <div className={secCls}>
           <div className="flex items-center gap-2"><GraduationCap className="w-5 h-5 text-blue-500" /><h2 className="font-semibold text-gray-800 dark:text-gray-100">{t('studyParams.general')}</h2></div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('studyParams.mode')}</label>
-            <div className="grid grid-cols-2 gap-2">
-              {(['learning', 'flashcard'] as const).map((m) => (
-                <button key={m} onClick={() => set({ mode: m })}
-                  className={cn('h-16 rounded-xl border text-left px-3 transition', s.mode === m ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30' : 'border-gray-300 dark:border-gray-700')}>
-                  <div className="text-sm font-semibold text-gray-800 dark:text-gray-100">{t(`studyParams.mode_${m}`)}</div>
-                  <div className="text-[11px] text-gray-400">{t(`studyParams.mode_${m}_hint`)}</div>
-                </button>
-              ))}
-            </div>
-          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('studyParams.deck')}</label>
@@ -90,6 +93,7 @@ export default function StudySettingsPage() {
         {/* Telegram */}
         <div className={secCls}>
           <div className="flex items-center gap-2"><Send className="w-5 h-5 text-sky-500" /><h2 className="font-semibold text-gray-800 dark:text-gray-100">{t('studyParams.telegram')}</h2></div>
+          {modePicker(s.mode, (m) => set({ mode: m }))}
           <label className="flex items-center justify-between cursor-pointer">
             <span className="text-sm text-gray-700 dark:text-gray-200">{t('studyParams.tgEnabled')}</span>
             <input type="checkbox" checked={s.study_enabled} onChange={(e) => set({ study_enabled: e.target.checked })} className="w-5 h-5 accent-blue-600" />
@@ -112,6 +116,7 @@ export default function StudySettingsPage() {
         {/* Extension */}
         <div className={secCls}>
           <div className="flex items-center gap-2"><Puzzle className="w-5 h-5 text-emerald-500" /><h2 className="font-semibold text-gray-800 dark:text-gray-100">{t('studyParams.extension')}</h2></div>
+          {modePicker(s.ext_mode, (m) => set({ ext_mode: m }))}
           <label className="flex items-center justify-between cursor-pointer">
             <span className="text-sm text-gray-700 dark:text-gray-200">{t('studyParams.extEnabled')}</span>
             <input type="checkbox" checked={s.ext_enabled} onChange={(e) => set({ ext_enabled: e.target.checked })} className="w-5 h-5 accent-blue-600" />

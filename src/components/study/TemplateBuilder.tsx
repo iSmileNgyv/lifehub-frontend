@@ -289,6 +289,7 @@ function FieldEditModal({ field, onClose, onSave, onDuplicate }: { field: Templa
   const [description, setDescription] = useState(field.description ?? '');
   const [type, setType] = useState<FieldType>(field.type);
   const [list, setList] = useState(!!field.list);
+  const [tgFront, setTgFront] = useState(!!field.tgFront);
   const [level, setLevel] = useState<HeadingLevel>(field.level ?? 'h2');
   const [color, setColor] = useState<string>(field.color ?? '#111827');
   const [align, setAlign] = useState<FieldAlign>(field.align ?? 'center');
@@ -297,8 +298,8 @@ function FieldEditModal({ field, onClose, onSave, onDuplicate }: { field: Templa
   const build = (): TemplateField => {
     const base = { ...field, key: (key.trim() || slug(label) || field.key), label: label.trim(), type };
     return isHeading
-      ? { ...base, description: null, list: false, level, color, align }
-      : { ...base, description: description.trim() || null, list, level: undefined, color: undefined, align: undefined };
+      ? { ...base, description: null, list: false, tgFront: false, level, color, align }
+      : { ...base, description: description.trim() || null, list, tgFront, level: undefined, color: undefined, align: undefined };
   };
   return (
     <Modal open onClose={onClose} title={isHeading ? t('study.typeHeading') : t('study.fieldLabel')} size="sm"
@@ -363,6 +364,10 @@ function FieldEditModal({ field, onClose, onSave, onDuplicate }: { field: Templa
             <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer pt-1">
               <input type="checkbox" checked={list} onChange={(e) => setList(e.target.checked)} className="w-4 h-4 rounded" />
               {t('study.showInList')}
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+              <input type="checkbox" checked={tgFront} onChange={(e) => setTgFront(e.target.checked)} className="w-4 h-4 rounded" />
+              {t('study.tgFront')}
             </label>
           </>
         )}

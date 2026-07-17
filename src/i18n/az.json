@@ -807,7 +807,8 @@
     "alignRight": "Sağ",
     "aiInstruction": "AI təlimatı",
     "aiInstructionPh": "Bütün sahələrə aid ümumi göstəriş — məs. «vurğu düşən hərfi qalın və qırmızı et»",
-    "showInList": "Siyahıda göstər"
+    "showInList": "Siyahıda göstər",
+    "tgFront": "Telegram önündə göstər"
   },
   "finance": {
     "title": "Maliyyə jurnalı",

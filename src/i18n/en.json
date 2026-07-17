@@ -807,7 +807,8 @@
     "alignRight": "Right",
     "aiInstruction": "AI instruction",
     "aiInstructionPh": "General guidance for all fields — e.g. «make the stressed letter bold and red»",
-    "showInList": "Show in list"
+    "showInList": "Show in list",
+    "tgFront": "Show on Telegram front"
   },
   "finance": {
     "title": "Finance journal",

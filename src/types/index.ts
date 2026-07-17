@@ -108,6 +108,7 @@ export interface TemplateField {
   side: FieldSide;
   section: string | null;
   list?: boolean; // kart siyahısında göstərilsin
+  tgFront?: boolean; // Telegram bot ön mesajında göstər (qalanı "Göstər" ilə)
   // Kətan layout (grid vahidləri) — opsional (köhnə şablonlar üçün)
   x?: number;
   y?: number;

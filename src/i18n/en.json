@@ -654,6 +654,9 @@
     "postWarn": "After posting the journal is locked. USD is consumed via FIFO, net amount hits the cash desk.",
     "netCash": "Net cash",
     "profit": "Profit",
+    "check": "Check",
+    "checkNote": "preview — not posted yet",
+    "shortage": "USD shortage",
     "rate": "Rate"
   },
   "vehicle": {

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, X, Trash2, Plus, TrendingDown, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Loader2, X, Trash2, Plus, TrendingDown, TrendingUp, Calculator } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useContentLanguages } from '@/contexts/ContentLanguagesContext';
@@ -34,10 +34,20 @@ export default function TradingJournalDetailPage() {
   const canPost = can('TRADING_POST');
   const [posting, setPosting] = useState(false);
   const [postBusy, setPostBusy] = useState(false);
+  const [checkResult, setCheckResult] = useState<{ profit: number; cogs: number; shortage_usd: number } | null>(null);
+  const [checkBusy, setCheckBusy] = useState(false);
 
   const load = useCallback(() => {
+    setCheckResult(null); // sətir dəyişəndə köhnə "yoxla" nəticəsi silinsin
     tradingJournalService.show(code).then(setJournal).catch((e) => setError(e instanceof ApiError ? e.message : 'error')).finally(() => setLoading(false));
   }, [code]);
+
+  const doCheck = async () => {
+    setCheckBusy(true); setError('');
+    try { setCheckResult(await tradingJournalService.check(code)); }
+    catch (e) { setError(e instanceof ApiError ? e.message : t('common.error')); }
+    finally { setCheckBusy(false); }
+  };
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
     tradingFormulaService.list().then((r) => setActiveTiers(r.data.find((f) => f.is_active)?.tiers ?? null)).catch(() => {});
@@ -73,6 +83,7 @@ export default function TradingJournalDetailPage() {
             <span className={cn('text-xs px-2.5 py-1 rounded-full', journal.status === 'posted' ? 'bg-green-100 dark:bg-green-950/40 text-green-600' : 'bg-amber-100 dark:bg-amber-950/40 text-amber-600')}>
               {journal.status === 'posted' ? t('trading.posted') : t('trading.draft')}
             </span>
+            {isDraft && entries.length > 0 && <Button variant="outline" onClick={doCheck} loading={checkBusy} leftIcon={<Calculator className="w-4 h-4" />}>{t('trading.check')}</Button>}
             {isDraft && canPost && entries.length > 0 && <Button onClick={() => setPosting(true)}>{t('trading.post')}</Button>}
           </div>
         }
@@ -91,8 +102,15 @@ export default function TradingJournalDetailPage() {
         <Stat label={t('trading.usdBought')} value={`${journal.usd_bought} $`} />
         <Stat label={t('trading.usdSold')} value={`${journal.usd_sold} $`} />
         <Stat label={t('trading.netCash')} value={`${journal.net_cash.toFixed(2)} ₼`} />
-        <Stat label={t('trading.profit')} value={journal.status === 'posted' ? `${journal.profit.toFixed(2)} ₼` : '—'} highlight={journal.status === 'posted'} />
+        <Stat label={t('trading.profit')} value={journal.status === 'posted' ? `${journal.profit.toFixed(2)} ₼` : (checkResult ? `${checkResult.profit.toFixed(2)} ₼` : '—')} highlight={journal.status === 'posted' || !!checkResult} />
       </div>
+
+      {checkResult && journal.status !== 'posted' && (
+        <div className="-mt-3 mb-4 text-xs text-gray-400 flex flex-wrap items-center gap-x-3">
+          <span>{t('trading.checkNote')}</span>
+          {checkResult.shortage_usd > 0 && <span className="text-red-500">⚠ {t('trading.shortage')}: {checkResult.shortage_usd} $</span>}
+        </div>
+      )}
 
       {/* Sətir əlavə etmə */}
       {isDraft && canEdit && <AddEntry code={code} activeTiers={activeTiers} onAdded={load} onError={setError} />}

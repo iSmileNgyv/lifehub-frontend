@@ -654,6 +654,9 @@
     "postWarn": "Post-dan sonra jurnal kilidlənir. FIFO ilə USD silinir, kassaya net məbləğ düşür.",
     "netCash": "Net kassa",
     "profit": "Mənfəət",
+    "check": "Yoxla",
+    "checkNote": "təxmini — hələ post olunmayıb",
+    "shortage": "USD çatmır",
     "rate": "Kurs"
   },
   "vehicle": {

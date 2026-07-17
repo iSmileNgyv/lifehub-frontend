@@ -32,6 +32,9 @@ export const tradingJournalService = {
   post: (code: string) =>
     api<{ message: string; revenue: number; buy_manat: number; cogs: number; profit: number; net_cash: number }>(`/trading/journals/${code}/post`, { method: 'POST' }),
 
+  check: (code: string) =>
+    api<{ buy_manat: number; sell_manat: number; buy_usd: number; sell_usd: number; net_cash: number; cogs: number; profit: number; shortage_usd: number }>(`/trading/journals/${code}/check`),
+
   addEntry: (code: string, data: EntryPayload) =>
     api<TradingJournalEntry>(`/trading/journals/${code}/entries`, { method: 'POST', body: JSON.stringify(data) }),
 

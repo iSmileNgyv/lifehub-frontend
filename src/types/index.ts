@@ -70,6 +70,8 @@ export interface Deck {
   cards_total: number;
   due_count: number;
   new_count: number;
+  imported: boolean;
+  pending_updates: number;
 }
 export type CardState = 'new' | 'learning' | 'review';
 export interface Card {

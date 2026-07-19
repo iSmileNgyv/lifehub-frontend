@@ -22,6 +22,14 @@ export const deckService = {
   remove: (uid: string) => api<{ message: string }>(`/study/decks/${uid}`, { method: 'DELETE' }),
 };
 
+export const deckShareService = {
+  get: (deck: string) => api<{ code: string | null }>(`/study/decks/${deck}/share`),
+  create: (deck: string) => api<{ code: string }>(`/study/decks/${deck}/share`, { method: 'POST' }),
+  revoke: (deck: string) => api<{ message: string }>(`/study/decks/${deck}/share`, { method: 'DELETE' }),
+  import: (code: string) => api<{ uid: string; name: string }>('/study/import', { method: 'POST', body: JSON.stringify({ code }) }),
+  pull: (deck: string) => api<{ added: number }>(`/study/decks/${deck}/pull`, { method: 'POST' }),
+};
+
 export const cardService = {
   list: (deck: string) => api<{ data: Card[] }>(`/study/decks/${deck}/cards`),
   create: (deck: string, data: CardPayload) => api<Card>(`/study/decks/${deck}/cards`, { method: 'POST', body: JSON.stringify(data) }),

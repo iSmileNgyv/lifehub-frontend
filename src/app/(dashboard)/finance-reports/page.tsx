@@ -1,11 +1,12 @@
 'use client';
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, TrendingUp, TrendingDown, Tag, Package, Wallet, ChevronDown, ChevronRight, ArrowUpRight, ArrowDownRight, FileDown, Printer, Search } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Loader2, TrendingUp, TrendingDown, Tag, Package, Wallet, ChevronDown, ChevronRight, ArrowUpRight, ArrowDownRight, FileDown, Printer, Search, Target, Trash2, Plus } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, BarChart, Bar, CartesianGrid } from 'recharts';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useContentLanguages } from '@/contexts/ContentLanguagesContext';
-import { financeReportService, type SummaryReport, type ItemsReport, type ItemsReportRow, type CashReport, type TrendReport, type EntriesReport } from '@/services/financeReportService';
+import { financeReportService, financeBudgetService, type SummaryReport, type ItemsReport, type ItemsReportRow, type CashReport, type TrendReport, type EntriesReport, type BudgetReport, type BudgetLine, type BudgetKind } from '@/services/financeReportService';
 import { financeCategoryService } from '@/services/financeCategoryService';
 import { itemService } from '@/services/itemService';
 import { ApiError } from '@/lib/api';
@@ -14,7 +15,7 @@ import { fmtDate, cn } from '@/lib/utils';
 import PageHeader from '@/components/ui/PageHeader';
 import type { FinanceCategory, Translatable, ItemPriceHistory } from '@/types';
 
-type Tab = 'summary' | 'items' | 'cash';
+type Tab = 'summary' | 'items' | 'cash' | 'budget';
 
 // CSV ixrac (client-side): BOM + ';' ayırıcı (Excel AZ/RU lokalı üçün etibarlı)
 function downloadCsv(filename: string, rows: (string | number)[][]) {
@@ -42,6 +43,7 @@ export default function FinanceReportsPage() {
   const [summary, setSummary] = useState<SummaryReport | null>(null);
   const [items, setItems] = useState<ItemsReport | null>(null);
   const [cash, setCash] = useState<CashReport | null>(null);
+  const [budget, setBudget] = useState<BudgetReport | null>(null);
   const [cats, setCats] = useState<FinanceCategory[]>([]);
   const [trend, setTrend] = useState<TrendReport | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -55,6 +57,12 @@ export default function FinanceReportsPage() {
 
   useEffect(() => { financeCategoryService.list().then(setCats).catch(() => {}); }, []);
   useEffect(() => { financeReportService.trend(12).then(setTrend).catch(() => {}); }, []);
+  // Sidebar linkindən gələn ?tab=budget kimi query-ni oxu
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const q = searchParams.get('tab');
+    if (q && ['summary', 'items', 'cash', 'budget'].includes(q)) setTab(q as Tab);
+  }, [searchParams]);
 
   const iso = (d: Date) => d.toISOString().slice(0, 10);
   const setPreset = (p: 'thisMonth' | 'lastMonth' | 'last3' | 'thisYear') => {
@@ -89,7 +97,8 @@ export default function FinanceReportsPage() {
     const fail = (e: unknown) => setError(e instanceof ApiError ? e.message : t('common.error'));
     if (tab === 'summary') financeReportService.summary(from, to).then(setSummary).catch(fail).finally(done);
     else if (tab === 'items') financeReportService.items(from, to).then(setItems).catch(fail).finally(done);
-    else financeReportService.cash(from, to, cashDesk).then(setCash).catch(fail).finally(done);
+    else if (tab === 'cash') financeReportService.cash(from, to, cashDesk).then(setCash).catch(fail).finally(done);
+    else financeReportService.budget(from, to).then(setBudget).catch(fail).finally(done);
   }, [tab, from, to, cashDesk, t]);
   useEffect(() => { load(); }, [load]);
   // Dövr dəyişəndə drill-down keşi köhnəlir
@@ -102,6 +111,11 @@ export default function FinanceReportsPage() {
     if (!catEntries[key]) {
       financeReportService.entries(from, to, type, category).then((r) => setCatEntries((m) => ({ ...m, [key]: r }))).catch(() => {});
     }
+  };
+
+  const saveBudget = async (kind: BudgetKind, category_code: string | null, amount: number) => {
+    await financeBudgetService.upsert(kind, category_code, amount);
+    setBudget(await financeReportService.budget(from, to));
   };
 
   const catName = (c: string | null) => { if (!c) return t('finance.noCategory'); const x = cats.find((k) => k.code === c); return x ? tr(x.name, c) : c; };
@@ -141,6 +155,7 @@ export default function FinanceReportsPage() {
     { key: 'summary', icon: Tag, label: t('finance.byCategory') },
     { key: 'items', icon: Package, label: t('finance.byItem') },
     { key: 'cash', icon: Wallet, label: t('finance.cashFlow') },
+    { key: 'budget', icon: Target, label: t('finance.budget') },
   ];
 
   return (
@@ -390,6 +405,8 @@ export default function FinanceReportsPage() {
               )}
             </div>
           </div>
+        ) : tab === 'budget' && budget ? (
+          <BudgetView report={budget} cats={cats} catName={catName} t={t} money={money} onSave={saveBudget} />
         ) : null}
     </div>
   );
@@ -506,6 +523,115 @@ function CashFlowChart({ flow, t, money }: { flow: CashReport['flow']; t: (k: st
           <Bar dataKey="out" fill="#ef4444" name={t('finance.cashOut')} radius={[2, 2, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
+    </div>
+  );
+}
+
+function BudgetBar({ actual, limit, goodWhenUnder }: { actual: number; limit: number; goodWhenUnder: boolean }) {
+  const pct = limit > 0 ? (actual / limit) * 100 : 0;
+  const over = actual > limit;
+  const color = goodWhenUnder
+    ? (over ? 'bg-red-500' : pct > 85 ? 'bg-amber-500' : 'bg-emerald-500')
+    : (actual >= limit && limit > 0 ? 'bg-emerald-500' : 'bg-indigo-500');
+  return (
+    <div className="h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+      <div className={cn('h-full rounded-full transition-all', color)} style={{ width: `${Math.min(100, pct)}%` }} />
+    </div>
+  );
+}
+
+function BudgetStats({ line, goodWhenUnder, t, money }: { line: BudgetLine; goodWhenUnder: boolean; t: (k: string) => string; money: (n: number | string) => string }) {
+  const rem = line.prorated - line.actual;
+  const pct = line.prorated > 0 ? (line.actual / line.prorated) * 100 : 0;
+  return (
+    <div className="flex justify-between text-xs mt-1 tabular-nums">
+      <span className="text-gray-400">{money(line.actual)} / {money(line.prorated)}</span>
+      {goodWhenUnder
+        ? <span className={cn(rem >= 0 ? 'text-emerald-600' : 'text-red-500')}>{rem >= 0 ? `${t('finance.remaining')}: ${money(rem)}` : `${t('finance.over')}: ${money(-rem)}`}</span>
+        : <span className={cn(line.actual >= line.prorated && line.prorated > 0 ? 'text-emerald-600' : 'text-gray-400')}>{pct.toFixed(0)}%</span>}
+    </div>
+  );
+}
+
+function BudgetCard({ title, line, goodWhenUnder, t, money, onSave }: { title: string; line: BudgetLine | null; goodWhenUnder: boolean; t: (k: string) => string; money: (n: number | string) => string; onSave: (a: number) => Promise<void> }) {
+  const [amt, setAmt] = useState(line ? String(line.monthly) : '');
+  const [saving, setSaving] = useState(false);
+  const save = async () => { setSaving(true); try { await onSave(Number(amt) || 0); } finally { setSaving(false); } };
+  return (
+    <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <span className="text-sm font-semibold">{title}</span>
+        <div className="flex items-center gap-1">
+          <input type="number" value={amt} onChange={(e) => setAmt(e.target.value)} placeholder="0"
+            className="w-24 h-8 px-2 text-right tabular-nums rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-blue-500" />
+          <span className="text-xs text-gray-400">/{t('finance.perMonth')}</span>
+          <button onClick={save} disabled={saving} className="ml-1 px-2.5 h-8 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-60">{t('common.save')}</button>
+        </div>
+      </div>
+      {line ? <><BudgetBar actual={line.actual} limit={line.prorated} goodWhenUnder={goodWhenUnder} /><BudgetStats line={line} goodWhenUnder={goodWhenUnder} t={t} money={money} /></>
+        : <p className="text-xs text-gray-400">{t('finance.notSet')}</p>}
+    </div>
+  );
+}
+
+function BudgetCategoryRow({ line, name, t, money, onSave }: { line: BudgetLine & { category_code: string }; name: string; t: (k: string) => string; money: (n: number | string) => string; onSave: (a: number) => Promise<void> }) {
+  const [amt, setAmt] = useState(String(line.monthly));
+  const [saving, setSaving] = useState(false);
+  const save = async (v: number) => { setSaving(true); try { await onSave(v); } finally { setSaving(false); } };
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <span className="text-sm truncate">{name}</span>
+        <div className="flex items-center gap-1 shrink-0">
+          <input type="number" value={amt} onChange={(e) => setAmt(e.target.value)}
+            className="w-20 h-7 px-2 text-right tabular-nums rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-xs outline-none focus:border-blue-500" />
+          <button onClick={() => save(Number(amt) || 0)} disabled={saving} className="px-2 h-7 rounded-lg bg-blue-600 text-white text-xs hover:bg-blue-700 disabled:opacity-60">{t('common.save')}</button>
+          <button onClick={() => save(0)} disabled={saving} title={t('common.delete')} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
+        </div>
+      </div>
+      <BudgetBar actual={line.actual} limit={line.prorated} goodWhenUnder />
+      <BudgetStats line={line} goodWhenUnder t={t} money={money} />
+    </div>
+  );
+}
+
+function AddCategoryBudget({ cats, existing, catName, t, onSave }: { cats: FinanceCategory[]; existing: string[]; catName: (c: string | null) => string; t: (k: string) => string; onSave: (code: string, amount: number) => Promise<void> }) {
+  const [code, setCode] = useState('');
+  const [amt, setAmt] = useState('');
+  const [saving, setSaving] = useState(false);
+  const avail = cats.filter((c) => c.type === 'expense' && !existing.includes(c.code));
+  const add = async () => { if (!code || !(Number(amt) > 0)) return; setSaving(true); try { await onSave(code, Number(amt)); setCode(''); setAmt(''); } finally { setSaving(false); } };
+  if (avail.length === 0) return null;
+  return (
+    <div className="flex items-center gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
+      <select value={code} onChange={(e) => setCode(e.target.value)}
+        className="flex-1 h-8 px-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-blue-500">
+        <option value="">{t('finance.selectCategory')}</option>
+        {avail.map((c) => <option key={c.code} value={c.code}>{catName(c.code)}</option>)}
+      </select>
+      <input type="number" value={amt} onChange={(e) => setAmt(e.target.value)} placeholder="0"
+        className="w-20 h-8 px-2 text-right tabular-nums rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm outline-none focus:border-blue-500" />
+      <button onClick={add} disabled={saving || !code} className="px-2.5 h-8 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 disabled:opacity-60 inline-flex items-center gap-1"><Plus className="w-3.5 h-3.5" />{t('finance.addBudget')}</button>
+    </div>
+  );
+}
+
+function BudgetView({ report, cats, catName, t, money, onSave }: { report: BudgetReport; cats: FinanceCategory[]; catName: (c: string | null) => string; t: (k: string) => string; money: (n: number | string) => string; onSave: (kind: BudgetKind, cat: string | null, amount: number) => Promise<void> }) {
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-gray-400 print:hidden">{t('finance.budgetProrateHint')} · {t('finance.factor')}: ×{report.factor}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <BudgetCard title={t('finance.overallExpense')} line={report.overall} goodWhenUnder t={t} money={money} onSave={(a) => onSave('overall_expense', null, a)} />
+        <BudgetCard title={t('finance.incomeTarget')} line={report.income} goodWhenUnder={false} t={t} money={money} onSave={(a) => onSave('income_target', null, a)} />
+      </div>
+      <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-4 space-y-3">
+        <p className="text-sm font-semibold">{t('finance.categoryLimits')}</p>
+        {report.categories.length === 0 && <p className="text-xs text-gray-400">{t('finance.notSet')}</p>}
+        {report.categories.map((c) => (
+          <BudgetCategoryRow key={c.category_code} line={c} name={catName(c.category_code)} t={t} money={money} onSave={(a) => onSave('category_expense', c.category_code, a)} />
+        ))}
+        <AddCategoryBudget cats={cats} existing={report.categories.map((c) => c.category_code)} catName={catName} t={t} onSave={(code, a) => onSave('category_expense', code, a)} />
+      </div>
     </div>
   );
 }

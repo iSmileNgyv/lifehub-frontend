@@ -40,6 +40,14 @@ export interface EntriesReport {
   total: number;
   rows: { uid: string; posting_date: string; entry_type: 'income' | 'expense'; category_code: string | null; cash_desk_code: string | null; amount_lcy: string; descr: string | null; transaction_number: number }[];
 }
+export interface BudgetLine { monthly: number; prorated: number; actual: number }
+export interface BudgetReport {
+  from: string; to: string; factor: number;
+  overall: BudgetLine | null;
+  income: BudgetLine | null;
+  categories: (BudgetLine & { category_code: string })[];
+}
+export type BudgetKind = 'category_expense' | 'overall_expense' | 'income_target';
 
 const qs = (p: Record<string, string>) => {
   const s = new URLSearchParams(Object.entries(p).filter(([, v]) => v));
@@ -54,4 +62,10 @@ export const financeReportService = {
   trend: (months = 6) => api<TrendReport>(`/finance-reports/trend?months=${months}`),
   entries: (from: string, to: string, type: 'income' | 'expense', category: string | null) =>
     api<EntriesReport>(`/finance-reports/entries${qs({ from, to, type, category: category ?? '__NONE__' })}`),
+  budget: (from: string, to: string) => api<BudgetReport>(`/finance-reports/budget${qs({ from, to })}`),
+};
+
+export const financeBudgetService = {
+  upsert: (kind: BudgetKind, category_code: string | null, amount: number) =>
+    api<unknown>('/finance-budgets', { method: 'POST', body: JSON.stringify({ kind, category_code, amount }) }),
 };

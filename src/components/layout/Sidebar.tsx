@@ -64,6 +64,7 @@ const navItems: NavItem[] = [
       { key: 'financeJournals', href: '/finance-journals', op: 'FINANCE_VIEW' },
       { key: 'financeLedger', href: '/finance-ledger', op: 'FINANCE_VIEW' },
       { key: 'financeReports', href: '/finance-reports', op: 'FINANCE_VIEW' },
+      { key: 'financeBudget', href: '/finance-reports?tab=budget', op: 'FINANCE_VIEW' },
       { key: 'cashdesks', href: '/cash-desks', op: 'CASHDESK_VIEW' },
       { key: 'finCategories', href: '/finance-categories', op: 'FINCATEGORY_VIEW' },
     ],
